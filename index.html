@@ -1,0 +1,1880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Attendance Desk</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- =========================================================
+         LOGIN PAGE
+    ========================================================== -->
+
+    <section id="loginPage" class="page active-page">
+
+        <div class="login-wrapper">
+
+            <div class="login-card">
+
+                <div class="brand-section">
+
+                    <div class="brand-logo">
+                        AD
+                    </div>
+
+                    <h1>Attendance Desk</h1>
+
+                    <p>
+                        Smart & Simple Attendance Management
+                    </p>
+
+                </div>
+
+
+                <div class="login-content">
+
+                    <h2>Welcome Back</h2>
+
+                    <p class="section-description">
+                        Sign in to continue to your dashboard
+                    </p>
+
+
+                    <form id="loginForm">
+
+                        <div class="form-group">
+
+                            <label for="loginUsername">
+                                Username
+                            </label>
+
+                            <input
+                                type="text"
+                                id="loginUsername"
+                                placeholder="Enter your username"
+                                autocomplete="username"
+                            >
+
+                            <small
+                                class="error-message"
+                                id="usernameError"
+                            ></small>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="loginPassword">
+                                Password
+                            </label>
+
+                            <input
+                                type="password"
+                                id="loginPassword"
+                                placeholder="Enter your password"
+                                autocomplete="current-password"
+                            >
+
+                            <small
+                                class="error-message"
+                                id="passwordError"
+                            ></small>
+
+                        </div>
+
+
+                        <div class="login-options">
+
+                            <label class="remember-option">
+
+                                <input
+                                    type="checkbox"
+                                    id="rememberMe"
+                                >
+
+                                <span>Remember me</span>
+
+                            </label>
+
+
+                            <a
+                                href="#"
+                                id="forgotPassword"
+                            >
+                                Forgot Password?
+                            </a>
+
+                        </div>
+
+
+                        <button
+                            type="submit"
+                            class="primary-btn login-btn"
+                        >
+                            Sign In
+                        </button>
+
+                    </form>
+
+                </div>
+
+
+                <div class="login-footer">
+
+                    <p>
+                        © 2026 Attendance Desk. All rights reserved.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =========================================================
+         MAIN APPLICATION
+    ========================================================== -->
+
+    <section
+        id="mainApp"
+        class="main-app hidden"
+    >
+
+        <!-- ================= SIDEBAR ================= -->
+
+        <aside class="sidebar">
+
+            <div class="sidebar-brand">
+
+                <div class="sidebar-logo">
+                    AD
+                </div>
+
+                <div>
+
+                    <h2>Attendance Desk</h2>
+
+                    <span>
+                        Management System
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <nav class="sidebar-nav">
+
+                <p class="nav-heading">
+                    MAIN MENU
+                </p>
+
+
+                <button
+                    class="nav-item active"
+                    data-section="dashboardSection"
+                >
+                    <span class="nav-icon">⌂</span>
+                    <span>Dashboard</span>
+                </button>
+
+
+                <button
+                    class="nav-item"
+                    data-section="studentsSection"
+                >
+                    <span class="nav-icon">♙</span>
+                    <span>Students</span>
+                </button>
+
+
+                <button
+                    class="nav-item"
+                    data-section="attendanceSection"
+                >
+                    <span class="nav-icon">✓</span>
+                    <span>Mark Attendance</span>
+                </button>
+
+
+                <button
+                    class="nav-item"
+                    data-section="recordsSection"
+                >
+                    <span class="nav-icon">▤</span>
+                    <span>Attendance Records</span>
+                </button>
+
+
+                <button
+                    class="nav-item"
+                    data-section="reportsSection"
+                >
+                    <span class="nav-icon">▥</span>
+                    <span>Reports</span>
+                </button>
+
+
+                <p class="nav-heading">
+                    SYSTEM
+                </p>
+
+
+                <button
+                    class="nav-item"
+                    data-section="profileSection"
+                >
+                    <span class="nav-icon">◉</span>
+                    <span>Profile</span>
+                </button>
+
+
+                <button
+                    class="nav-item"
+                    data-section="settingsSection"
+                >
+                    <span class="nav-icon">⚙</span>
+                    <span>Settings</span>
+                </button>
+
+            </nav>
+
+
+            <div class="sidebar-bottom">
+
+                <button
+                    class="logout-btn"
+                    id="logoutBtn"
+                >
+                    <span>⇥</span>
+                    Logout
+                </button>
+
+            </div>
+
+        </aside>
+
+
+
+        <!-- ================= MAIN CONTENT ================= -->
+
+        <main class="content-area">
+
+
+            <!-- ================= TOPBAR ================= -->
+
+            <header class="topbar">
+
+                <div class="mobile-menu-btn" id="mobileMenuBtn">
+                    ☰
+                </div>
+
+
+                <div class="topbar-title">
+
+                    <h1 id="pageTitle">
+                        Dashboard
+                    </h1>
+
+                    <p id="pageSubtitle">
+                        Overview of today's attendance
+                    </p>
+
+                </div>
+
+
+                <div class="topbar-right">
+
+                    <div class="current-date" id="currentDate">
+                        --/--/----
+                    </div>
+
+
+                    <div class="notification-wrapper">
+
+                        <button
+                            class="icon-btn"
+                            id="notificationBtn"
+                            title="Notifications"
+                        >
+                            ♢
+                        </button>
+
+                        <span class="notification-dot"></span>
+
+                    </div>
+
+
+                    <div class="user-profile">
+
+                        <div class="user-avatar">
+                            A
+                        </div>
+
+                        <div class="user-info">
+
+                            <strong id="topbarUserName">
+                                Admin
+                            </strong>
+
+                            <span>
+                                Administrator
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </header>
+
+
+
+            <!-- =====================================================
+                 DASHBOARD
+            ====================================================== -->
+
+            <section
+                id="dashboardSection"
+                class="content-section active-section"
+            >
+
+                <div class="welcome-banner">
+
+                    <div>
+
+                        <p class="welcome-small">
+                            Welcome back,
+                        </p>
+
+                        <h2>
+                            Good Morning, Admin 👋
+                        </h2>
+
+                        <p>
+                            Here's what's happening with attendance today.
+                        </p>
+
+                    </div>
+
+                    <div class="welcome-date">
+                        <span id="dashboardDate">
+                            Today
+                        </span>
+                    </div>
+
+                </div>
+
+
+
+                <!-- STAT CARDS -->
+
+                <div class="stats-grid">
+
+                    <div class="stat-card">
+
+                        <div class="stat-icon total-icon">
+                            ♙
+                        </div>
+
+                        <div class="stat-details">
+
+                            <span>
+                                Total Students
+                            </span>
+
+                            <strong id="totalStudents">
+                                0
+                            </strong>
+
+                            <small>
+                                Registered students
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="stat-card">
+
+                        <div class="stat-icon present-icon">
+                            ✓
+                        </div>
+
+                        <div class="stat-details">
+
+                            <span>
+                                Present Today
+                            </span>
+
+                            <strong id="presentToday">
+                                0
+                            </strong>
+
+                            <small>
+                                Students present
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="stat-card">
+
+                        <div class="stat-icon absent-icon">
+                            ×
+                        </div>
+
+                        <div class="stat-details">
+
+                            <span>
+                                Absent Today
+                            </span>
+
+                            <strong id="absentToday">
+                                0
+                            </strong>
+
+                            <small>
+                                Students absent
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="stat-card">
+
+                        <div class="stat-icon percentage-icon">
+                            %
+                        </div>
+
+                        <div class="stat-details">
+
+                            <span>
+                                Attendance Rate
+                            </span>
+
+                            <strong id="attendanceRate">
+                                0%
+                            </strong>
+
+                            <small>
+                                Today's attendance
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- DASHBOARD GRID -->
+
+                <div class="dashboard-grid">
+
+
+                    <!-- QUICK ACTIONS -->
+
+                    <div class="dashboard-card">
+
+                        <div class="card-header">
+
+                            <div>
+
+                                <h3>
+                                    Quick Actions
+                                </h3>
+
+                                <p>
+                                    Manage attendance quickly
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="quick-actions">
+
+                            <button
+                                class="quick-action"
+                                data-target="attendanceSection"
+                            >
+
+                                <span class="quick-icon">
+                                    ✓
+                                </span>
+
+                                <span>
+                                    Mark Attendance
+                                </span>
+
+                            </button>
+
+
+                            <button
+                                class="quick-action"
+                                data-target="studentsSection"
+                            >
+
+                                <span class="quick-icon">
+                                    +
+                                </span>
+
+                                <span>
+                                    Add Student
+                                </span>
+
+                            </button>
+
+
+                            <button
+                                class="quick-action"
+                                data-target="recordsSection"
+                            >
+
+                                <span class="quick-icon">
+                                    ▤
+                                </span>
+
+                                <span>
+                                    View Records
+                                </span>
+
+                            </button>
+
+
+                            <button
+                                class="quick-action"
+                                data-target="reportsSection"
+                            >
+
+                                <span class="quick-icon">
+                                    ▥
+                                </span>
+
+                                <span>
+                                    View Reports
+                                </span>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- TODAY SUMMARY -->
+
+                    <div class="dashboard-card">
+
+                        <div class="card-header">
+
+                            <div>
+
+                                <h3>
+                                    Today's Summary
+                                </h3>
+
+                                <p>
+                                    Attendance overview
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="attendance-summary">
+
+                            <div class="summary-row">
+
+                                <span>
+                                    Present
+                                </span>
+
+                                <strong id="summaryPresent">
+                                    0
+                                </strong>
+
+                            </div>
+
+
+                            <div class="summary-progress">
+
+                                <div
+                                    class="progress-bar"
+                                    id="presentProgress"
+                                ></div>
+
+                            </div>
+
+
+                            <div class="summary-row">
+
+                                <span>
+                                    Absent
+                                </span>
+
+                                <strong id="summaryAbsent">
+                                    0
+                                </strong>
+
+                            </div>
+
+
+                            <div class="summary-progress">
+
+                                <div
+                                    class="progress-bar absent-progress"
+                                    id="absentProgress"
+                                ></div>
+
+                            </div>
+
+
+                            <div class="summary-row">
+
+                                <span>
+                                    Not Marked
+                                </span>
+
+                                <strong id="summaryNotMarked">
+                                    0
+                                </strong>
+
+                            </div>
+
+
+                            <div class="summary-progress">
+
+                                <div
+                                    class="progress-bar neutral-progress"
+                                    id="notMarkedProgress"
+                                ></div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- RECENT ATTENDANCE -->
+
+                <div class="dashboard-card full-width">
+
+                    <div class="card-header">
+
+                        <div>
+
+                            <h3>
+                                Recent Attendance
+                            </h3>
+
+                            <p>
+                                Latest attendance activity
+                            </p>
+
+                        </div>
+
+
+                        <button
+                            class="text-btn"
+                            data-target="recordsSection"
+                        >
+                            View All
+                        </button>
+
+                    </div>
+
+
+                    <div class="table-wrapper">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Student
+                                    </th>
+
+                                    <th>
+                                        Roll No.
+                                    </th>
+
+                                    <th>
+                                        Class
+                                    </th>
+
+                                    <th>
+                                        Date
+                                    </th>
+
+                                    <th>
+                                        Status
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="recentAttendanceTable">
+
+                                <tr>
+
+                                    <td colspan="5">
+                                        No attendance records found.
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =====================================================
+                 STUDENTS
+            ====================================================== -->
+
+            <section
+                id="studentsSection"
+                class="content-section"
+            >
+
+                <div class="section-top">
+
+                    <div>
+
+                        <h2>
+                            Students
+                        </h2>
+
+                        <p>
+                            Manage all registered students
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        class="primary-btn"
+                        id="addStudentBtn"
+                    >
+                        + Add Student
+                    </button>
+
+                </div>
+
+
+                <div class="filter-card">
+
+                    <div class="search-box">
+
+                        <span>
+                            ⌕
+                        </span>
+
+                        <input
+                            type="text"
+                            id="studentSearch"
+                            placeholder="Search students..."
+                        >
+
+                    </div>
+
+
+                    <select id="classFilter">
+
+                        <option value="all">
+                            All Classes
+                        </option>
+
+                        <option value="FY BSc CS">
+                            FY BSc CS
+                        </option>
+
+                        <option value="SY BSc CS">
+                            SY BSc CS
+                        </option>
+
+                        <option value="TY BSc CS">
+                            TY BSc CS
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="dashboard-card full-width">
+
+                    <div class="table-wrapper">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Roll No.
+                                    </th>
+
+                                    <th>
+                                        Student Name
+                                    </th>
+
+                                    <th>
+                                        Email
+                                    </th>
+
+                                    <th>
+                                        Class
+                                    </th>
+
+                                    <th>
+                                        Phone
+                                    </th>
+
+                                    <th>
+                                        Actions
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="studentsTable">
+
+                                <tr>
+
+                                    <td colspan="6">
+                                        No students found.
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =====================================================
+                 MARK ATTENDANCE
+            ====================================================== -->
+
+            <section
+                id="attendanceSection"
+                class="content-section"
+            >
+
+                <div class="section-top">
+
+                    <div>
+
+                        <h2>
+                            Mark Attendance
+                        </h2>
+
+                        <p>
+                            Record today's student attendance
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="attendance-controls">
+
+                    <div class="form-group">
+
+                        <label>
+                            Date
+                        </label>
+
+                        <input
+                            type="date"
+                            id="attendanceDate"
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Class
+                        </label>
+
+                        <select id="attendanceClass">
+
+                            <option value="all">
+                                Select Class
+                            </option>
+
+                            <option value="FY BSc CS">
+                                FY BSc CS
+                            </option>
+
+                            <option value="SY BSc CS">
+                                SY BSc CS
+                            </option>
+
+                            <option value="TY BSc CS">
+                                TY BSc CS
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Subject
+                        </label>
+
+                        <select id="attendanceSubject">
+
+                            <option value="all">
+                                Select Subject
+                            </option>
+
+                            <option value="Java">
+                                Java
+                            </option>
+
+                            <option value="DBMS">
+                                DBMS
+                            </option>
+
+                            <option value="Web Programming">
+                                Web Programming
+                            </option>
+
+                            <option value="Data Science">
+                                Data Science
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <button
+                        class="secondary-btn"
+                        id="loadStudentsBtn"
+                    >
+                        Load Students
+                    </button>
+
+                </div>
+
+
+                <div class="dashboard-card full-width">
+
+                    <div class="attendance-header">
+
+                        <div>
+
+                            <h3>
+                                Student Attendance
+                            </h3>
+
+                            <p>
+                                Mark students as Present or Absent
+                            </p>
+
+                        </div>
+
+
+                        <div class="attendance-actions">
+
+                            <button
+                                class="outline-btn"
+                                id="markAllPresent"
+                            >
+                                Mark All Present
+                            </button>
+
+                            <button
+                                class="outline-btn danger-outline"
+                                id="markAllAbsent"
+                            >
+                                Mark All Absent
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="table-wrapper">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        #
+                                    </th>
+
+                                    <th>
+                                        Roll No.
+                                    </th>
+
+                                    <th>
+                                        Student Name
+                                    </th>
+
+                                    <th>
+                                        Status
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="attendanceTable">
+
+                                <tr>
+
+                                    <td colspan="4">
+                                        Select class and load students.
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+
+                    <div class="save-attendance-area">
+
+                        <button
+                            class="primary-btn"
+                            id="saveAttendanceBtn"
+                        >
+                            Save Attendance
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =====================================================
+                 ATTENDANCE RECORDS
+            ====================================================== -->
+
+            <section
+                id="recordsSection"
+                class="content-section"
+            >
+
+                <div class="section-top">
+
+                    <div>
+
+                        <h2>
+                            Attendance Records
+                        </h2>
+
+                        <p>
+                            View and manage attendance history
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="filter-card records-filter">
+
+                    <div class="form-group">
+
+                        <label>
+                            From Date
+                        </label>
+
+                        <input
+                            type="date"
+                            id="recordFromDate"
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            To Date
+                        </label>
+
+                        <input
+                            type="date"
+                            id="recordToDate"
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Class
+                        </label>
+
+                        <select id="recordClass">
+
+                            <option value="all">
+                                All Classes
+                            </option>
+
+                            <option value="FY BSc CS">
+                                FY BSc CS
+                            </option>
+
+                            <option value="SY BSc CS">
+                                SY BSc CS
+                            </option>
+
+                            <option value="TY BSc CS">
+                                TY BSc CS
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <button
+                        class="secondary-btn"
+                        id="filterRecordsBtn"
+                    >
+                        Apply Filter
+                    </button>
+
+                </div>
+
+
+                <div class="dashboard-card full-width">
+
+                    <div class="table-wrapper">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Date
+                                    </th>
+
+                                    <th>
+                                        Roll No.
+                                    </th>
+
+                                    <th>
+                                        Student
+                                    </th>
+
+                                    <th>
+                                        Class
+                                    </th>
+
+                                    <th>
+                                        Subject
+                                    </th>
+
+                                    <th>
+                                        Status
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="recordsTable">
+
+                                <tr>
+
+                                    <td colspan="6">
+                                        No attendance records found.
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =====================================================
+                 REPORTS
+            ====================================================== -->
+
+            <section
+                id="reportsSection"
+                class="content-section"
+            >
+
+                <div class="section-top">
+
+                    <div>
+
+                        <h2>
+                            Attendance Reports
+                        </h2>
+
+                        <p>
+                            Analyze student attendance performance
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        class="secondary-btn"
+                        id="printReportBtn"
+                    >
+                        Print Report
+                    </button>
+
+                </div>
+
+
+                <div class="report-cards">
+
+                    <div class="report-card">
+
+                        <span>
+                            Overall Attendance
+                        </span>
+
+                        <strong id="overallAttendance">
+                            0%
+                        </strong>
+
+                    </div>
+
+
+                    <div class="report-card">
+
+                        <span>
+                            Highest Attendance
+                        </span>
+
+                        <strong id="highestAttendance">
+                            0%
+                        </strong>
+
+                    </div>
+
+
+                    <div class="report-card">
+
+                        <span>
+                            Lowest Attendance
+                        </span>
+
+                        <strong id="lowestAttendance">
+                            0%
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="dashboard-card full-width">
+
+                    <div class="card-header">
+
+                        <div>
+
+                            <h3>
+                                Student Attendance Report
+                            </h3>
+
+                            <p>
+                                Attendance percentage by student
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="table-wrapper">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Roll No.
+                                    </th>
+
+                                    <th>
+                                        Student
+                                    </th>
+
+                                    <th>
+                                        Class
+                                    </th>
+
+                                    <th>
+                                        Present
+                                    </th>
+
+                                    <th>
+                                        Absent
+                                    </th>
+
+                                    <th>
+                                        Percentage
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="reportsTable">
+
+                                <tr>
+
+                                    <td colspan="6">
+                                        No report data available.
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =====================================================
+                 PROFILE
+            ====================================================== -->
+
+            <section
+                id="profileSection"
+                class="content-section"
+            >
+
+                <div class="section-top">
+
+                    <div>
+
+                        <h2>
+                            Profile
+                        </h2>
+
+                        <p>
+                            Manage your account information
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="profile-card">
+
+                    <div class="profile-avatar">
+                        A
+                    </div>
+
+
+                    <div class="profile-info">
+
+                        <h3>
+                            Administrator
+                        </h3>
+
+                        <p>
+                            admin@attendancedesk.com
+                        </p>
+
+                        <span>
+                            Administrator
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="dashboard-card">
+
+                    <h3>
+                        Personal Information
+                    </h3>
+
+
+                    <div class="profile-form">
+
+                        <div class="form-group">
+
+                            <label>
+                                Full Name
+                            </label>
+
+                            <input
+                                type="text"
+                                id="profileName"
+                                value="Administrator"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Email
+                            </label>
+
+                            <input
+                                type="email"
+                                id="profileEmail"
+                                value="admin@attendancedesk.com"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Phone
+                            </label>
+
+                            <input
+                                type="text"
+                                id="profilePhone"
+                                placeholder="Enter phone number"
+                            >
+
+                        </div>
+
+
+                        <button
+                            class="primary-btn"
+                            id="saveProfileBtn"
+                        >
+                            Save Changes
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =====================================================
+                 SETTINGS
+            ====================================================== -->
+
+            <section
+                id="settingsSection"
+                class="content-section"
+            >
+
+                <div class="section-top">
+
+                    <div>
+
+                        <h2>
+                            Settings
+                        </h2>
+
+                        <p>
+                            Configure Attendance Desk
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="dashboard-card settings-card">
+
+                    <div class="setting-item">
+
+                        <div>
+
+                            <h3>
+                                Notifications
+                            </h3>
+
+                            <p>
+                                Receive attendance notifications
+                            </p>
+
+                        </div>
+
+                        <label class="switch">
+
+                            <input
+                                type="checkbox"
+                                id="notificationSetting"
+                                checked
+                            >
+
+                            <span class="slider"></span>
+
+                        </label>
+
+                    </div>
+
+
+                    <div class="setting-item">
+
+                        <div>
+
+                            <h3>
+                                Email Reports
+                            </h3>
+
+                            <p>
+                                Receive regular attendance reports
+                            </p>
+
+                        </div>
+
+                        <label class="switch">
+
+                            <input
+                                type="checkbox"
+                                id="emailReportSetting"
+                            >
+
+                            <span class="slider"></span>
+
+                        </label>
+
+                    </div>
+
+
+                    <div class="setting-item">
+
+                        <div>
+
+                            <h3>
+                                Compact Tables
+                            </h3>
+
+                            <p>
+                                Use smaller table rows
+                            </p>
+
+                        </div>
+
+                        <label class="switch">
+
+                            <input
+                                type="checkbox"
+                                id="compactTableSetting"
+                            >
+
+                            <span class="slider"></span>
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </section>
+
+
+
+    <!-- =========================================================
+         ADD STUDENT MODAL
+    ========================================================== -->
+
+    <div
+        class="modal-overlay hidden"
+        id="studentModal"
+    >
+
+        <div class="modal">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <h2>
+                        Add Student
+                    </h2>
+
+                    <p>
+                        Enter student details
+                    </p>
+
+                </div>
+
+
+                <button
+                    class="modal-close"
+                    id="closeStudentModal"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="studentForm">
+
+                <div class="modal-body">
+
+                    <div class="form-row">
+
+                        <div class="form-group">
+
+                            <label>
+                                Roll Number
+                            </label>
+
+                            <input
+                                type="text"
+                                id="studentRoll"
+                                placeholder="Enter roll number"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Student Name
+                            </label>
+
+                            <input
+                                type="text"
+                                id="studentName"
+                                placeholder="Enter student name"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-row">
+
+                        <div class="form-group">
+
+                            <label>
+                                Email
+                            </label>
+
+                            <input
+                                type="email"
+                                id="studentEmail"
+                                placeholder="Enter email"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Phone
+                            </label>
+
+                            <input
+                                type="text"
+                                id="studentPhone"
+                                placeholder="Enter phone number"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Class
+                        </label>
+
+                        <select
+                            id="studentClass"
+                            required
+                        >
+
+                            <option value="">
+                                Select Class
+                            </option>
+
+                            <option value="FY BSc CS">
+                                FY BSc CS
+                            </option>
+
+                            <option value="SY BSc CS">
+                                SY BSc CS
+                            </option>
+
+                            <option value="TY BSc CS">
+                                TY BSc CS
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="outline-btn"
+                        id="cancelStudentBtn"
+                    >
+                        Cancel
+                    </button>
+
+
+                    <button
+                        type="submit"
+                        class="primary-btn"
+                    >
+                        Add Student
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================================================
+         CONFIRMATION / TOAST
+    ========================================================== -->
+
+    <div
+        class="toast"
+        id="toast"
+    >
+
+        <span id="toastIcon">
+            ✓
+        </span>
+
+        <div>
+
+            <strong id="toastTitle">
+                Success
+            </strong>
+
+            <p id="toastMessage">
+                Operation completed successfully.
+            </p>
+
+        </div>
+
+        <button id="closeToast">
+            ×
+        </button>
+
+    </div>
+
+
+
+    <!-- =========================================================
+         JAVASCRIPT
+    ========================================================== -->
+
+    <script src="script.js"></script>
+
+</body>
+</html>
