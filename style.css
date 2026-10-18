@@ -1,12 +1,6 @@
-/* =========================================================
-   ATTENDANCE DESK
-   Complete Stylesheet
-========================================================= */
+/* Attendance Desk */
 
-
-/* =========================================================
-   ROOT VARIABLES
-========================================================= */
+/* Root Variables */
 
 :root {
     --primary: #1f4e79;
@@ -44,10 +38,7 @@
     --transition: 0.25s ease;
 }
 
-
-/* =========================================================
-   RESET
-========================================================= */
+/* Reset */
 
 * {
     margin: 0;
@@ -92,10 +83,7 @@ ul {
     list-style: none;
 }
 
-
-/* =========================================================
-   COMMON
-========================================================= */
+/* Common */
 
 .hidden {
     display: none !important;
@@ -109,10 +97,7 @@ ul {
     display: block;
 }
 
-
-/* =========================================================
-   LOGIN PAGE
-========================================================= */
+/* Login Page */
 
 .login-page {
     min-height: 100vh;
@@ -148,7 +133,6 @@ ul {
 
     overflow: hidden;
 }
-
 
 /* Brand */
 
@@ -201,7 +185,6 @@ ul {
     font-size: 13px;
 }
 
-
 /* Login Content */
 
 .login-content {
@@ -224,7 +207,6 @@ ul {
 
     margin-bottom: 25px;
 }
-
 
 /* Forms */
 
@@ -298,7 +280,6 @@ ul {
     min-height: 14px;
 }
 
-
 /* Login Options */
 
 .login-options {
@@ -331,7 +312,6 @@ ul {
 .login-options a:hover {
     text-decoration: underline;
 }
-
 
 /* Buttons */
 
@@ -437,7 +417,6 @@ ul {
     font-size: 14px;
 }
 
-
 /* Login Footer */
 
 .login-footer {
@@ -455,10 +434,7 @@ ul {
     font-size: 11px;
 }
 
-
-/* =========================================================
-   MAIN APPLICATION
-========================================================= */
+/* Main Application */
 
 .main-app {
     min-height: 100vh;
@@ -468,10 +444,7 @@ ul {
     background: var(--background);
 }
 
-
-/* =========================================================
-   SIDEBAR
-========================================================= */
+/* Sidebar */
 
 .sidebar {
     position: fixed;
@@ -491,7 +464,6 @@ ul {
 
     z-index: 100;
 }
-
 
 /* Sidebar Brand */
 
@@ -532,7 +504,6 @@ ul {
 
     margin-top: 2px;
 }
-
 
 /* Navigation */
 
@@ -610,7 +581,6 @@ ul {
     font-size: 16px;
 }
 
-
 /* Sidebar Bottom */
 
 .sidebar-bottom {
@@ -649,10 +619,7 @@ ul {
     background: var(--danger-light);
 }
 
-
-/* =========================================================
-   CONTENT AREA
-========================================================= */
+/* Content Area */
 
 .content-area {
     width: calc(100% - var(--sidebar-width));
@@ -662,10 +629,7 @@ ul {
     min-height: 100vh;
 }
 
-
-/* =========================================================
-   TOPBAR
-========================================================= */
+/* Topbar */
 
 .topbar {
     height: 78px;
@@ -814,10 +778,7 @@ ul {
     cursor: pointer;
 }
 
-
-/* =========================================================
-   CONTENT SECTIONS
-========================================================= */
+/* Content Sections */
 
 .content-section {
     display: none;
@@ -829,10 +790,7 @@ ul {
     display: block;
 }
 
-
-/* =========================================================
-   WELCOME BANNER
-========================================================= */
+/* Welcome Banner */
 
 .welcome-banner {
     min-height: 125px;
@@ -892,10 +850,7 @@ ul {
     background: rgba(255, 255, 255, 0.08);
 }
 
-
-/* =========================================================
-   STAT CARDS
-========================================================= */
+/* Stat Cards */
 
 .stats-grid {
     display: grid;
@@ -999,10 +954,7 @@ ul {
     margin-top: 5px;
 }
 
-
-/* =========================================================
-   DASHBOARD GRID
-========================================================= */
+/* Dashboard Grid */
 
 .dashboard-grid {
     display: grid;
@@ -1014,10 +966,7 @@ ul {
     margin-bottom: 20px;
 }
 
-
-/* =========================================================
-   DASHBOARD CARD
-========================================================= */
+/* Dashboard Card */
 
 .dashboard-card {
     background: var(--white);
@@ -1061,10 +1010,7 @@ ul {
     font-size: 10px;
 }
 
-
-/* =========================================================
-   QUICK ACTIONS
-========================================================= */
+/* Quick Actions */
 
 .quick-actions {
     padding: 19px;
@@ -1131,10 +1077,7 @@ ul {
     flex-shrink: 0;
 }
 
-
-/* =========================================================
-   ATTENDANCE SUMMARY
-========================================================= */
+/* Attendance Summary */
 
 .attendance-summary {
     padding: 19px 21px;
@@ -1188,10 +1131,7 @@ ul {
     background: #9aa4ae;
 }
 
-
-/* =========================================================
-   SECTION TOP
-========================================================= */
+/* Section Top */
 
 .section-top {
     display: flex;
@@ -1215,10 +1155,7 @@ ul {
     font-size: 11px;
 }
 
-
-/* =========================================================
-   FILTER CARD
-========================================================= */
+/* Filter Card */
 
 .filter-card {
     background: var(--white);
@@ -1311,10 +1248,7 @@ ul {
     height: 40px;
 }
 
-
-/* =========================================================
-   TABLE
-========================================================= */
+/* Table */
 
 .table-wrapper {
     width: 100%;
@@ -1374,7 +1308,6 @@ tbody tr:last-child td {
     border-bottom: none;
 }
 
-
 /* Status */
 
 .status-badge {
@@ -1408,7 +1341,6 @@ tbody tr:last-child td {
     background: var(--warning-light);
     color: var(--warning);
 }
-
 
 /* Table Actions */
 
@@ -1446,10 +1378,7 @@ tbody tr:last-child td {
     background: var(--danger-light);
 }
 
-
-/* =========================================================
-   ATTENDANCE CONTROLS
-========================================================= */
+/* Attendance Controls */
 
 .attendance-controls {
     background: var(--white);
@@ -1481,10 +1410,7 @@ tbody tr:last-child td {
     height: 42px;
 }
 
-
-/* =========================================================
-   ATTENDANCE HEADER
-========================================================= */
+/* Attendance Header */
 
 .attendance-header {
     padding: 18px 20px;
@@ -1512,7 +1438,6 @@ tbody tr:last-child td {
     display: flex;
     gap: 7px;
 }
-
 
 /* Attendance Status Buttons */
 
@@ -1557,7 +1482,6 @@ tbody tr:last-child td {
     border-color: #e2aaaa;
 }
 
-
 /* Save Attendance */
 
 .save-attendance-area {
@@ -1569,10 +1493,7 @@ tbody tr:last-child td {
     justify-content: flex-end;
 }
 
-
-/* =========================================================
-   REPORT CARDS
-========================================================= */
+/* Report Cards */
 
 .report-cards {
     display: grid;
@@ -1613,10 +1534,7 @@ tbody tr:last-child td {
     font-size: 27px;
 }
 
-
-/* =========================================================
-   PROFILE
-========================================================= */
+/* Profile */
 
 .profile-card {
     background: var(--white);
@@ -1702,10 +1620,7 @@ tbody tr:last-child td {
     margin-bottom: 17px;
 }
 
-
-/* =========================================================
-   SETTINGS
-========================================================= */
+/* Settings */
 
 .settings-card {
     padding: 0 20px;
@@ -1738,7 +1653,6 @@ tbody tr:last-child td {
 
     font-size: 10px;
 }
-
 
 /* Toggle */
 
@@ -1797,10 +1711,7 @@ tbody tr:last-child td {
     transform: translateX(19px);
 }
 
-
-/* =========================================================
-   MODAL
-========================================================= */
+/* Modal */
 
 .modal-overlay {
     position: fixed;
@@ -1920,10 +1831,7 @@ tbody tr:last-child td {
     background: #fafbfc;
 }
 
-
-/* =========================================================
-   TOAST
-========================================================= */
+/* Toast */
 
 .toast {
     position: fixed;
@@ -2020,10 +1928,7 @@ tbody tr:last-child td {
     font-size: 17px;
 }
 
-
-/* =========================================================
-   MOBILE
-========================================================= */
+/* Mobile */
 
 @media (max-width: 1100px) {
 
@@ -2046,10 +1951,7 @@ tbody tr:last-child td {
     }
 }
 
-
-/* =========================================================
-   TABLET
-========================================================= */
+/* Tablet */
 
 @media (max-width: 850px) {
 
@@ -2116,10 +2018,7 @@ tbody tr:last-child td {
     }
 }
 
-
-/* =========================================================
-   MOBILE
-========================================================= */
+/* Mobile */
 
 @media (max-width: 600px) {
 
@@ -2296,10 +2195,7 @@ tbody tr:last-child td {
     }
 }
 
-
-/* =========================================================
-   SMALL MOBILE
-========================================================= */
+/* Small Mobile */
 
 @media (max-width: 400px) {
 
@@ -2324,10 +2220,7 @@ tbody tr:last-child td {
     }
 }
 
-
-/* =========================================================
-   PRINT
-========================================================= */
+/* Print */
 
 @media print {
 
@@ -2361,5 +2254,459 @@ tbody tr:last-child td {
 
     body {
         background: white;
+    }
+}
+
+/* ===== Attendance Table Modern Layout ===== */
+
+.attendance-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.attendance-table {
+    width: 100%;
+    min-width: 680px;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+    font-size: 14px;
+    color: #334155;
+}
+
+.attendance-table thead th {
+    padding: 16px 20px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.45px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.attendance-table tbody td {
+    padding: 16px 20px;
+    border-bottom: 1px solid #edf0f5;
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+}
+
+.attendance-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.attendance-table tbody tr {
+    transition: background 0.2s ease;
+}
+
+.attendance-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.attendance-table .col-number {
+    width: 65px;
+}
+
+.attendance-table .col-roll {
+    width: 125px;
+}
+
+.attendance-table .col-class {
+    width: 155px;
+}
+
+.attendance-table .col-status {
+    width: 190px;
+}
+
+.attendance-table .student-name {
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.attendance-table .attendance-status {
+    display: block;
+    width: 100%;
+    max-width: 170px;
+    min-height: 40px;
+    padding: 8px 34px 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background-color: #ffffff;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+}
+
+.attendance-table .attendance-status:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.attendance-table .attendance-status.status-present {
+    color: #15803d;
+    background-color: #f0fdf4;
+    border-color: #bbf7d0;
+}
+
+.attendance-table .attendance-status.status-absent {
+    color: #b91c1c;
+    background-color: #fef2f2;
+    border-color: #fecaca;
+}
+
+.attendance-table .attendance-status.status-unmarked {
+    color: #64748b;
+    background-color: #f8fafc;
+}
+
+.attendance-table .attendance-empty {
+    padding: 35px 20px;
+    text-align: center;
+    color: #94a3b8;
+}
+
+@media (max-width: 768px) {
+    .attendance-table {
+        min-width: 650px;
+    }
+
+    .attendance-table thead th,
+    .attendance-table tbody td {
+        padding: 13px 12px;
+    }
+}
+
+
+/* =========================================================
+   PREMIUM ADMIN PROFILE
+   ========================================================= */
+.profile-section-heading { align-items: center; }
+.profile-secure-pill { display:inline-flex; align-items:center; gap:8px; padding:9px 12px; border:1px solid var(--border); border-radius:999px; background:var(--white); color:var(--text-light); font-size:11px; font-weight:600; }
+.profile-secure-dot,.profile-status-dot { width:8px; height:8px; display:inline-block; border-radius:50%; background:#22a06b; box-shadow:0 0 0 3px rgba(34,160,107,.12); }
+.admin-profile-hero { display:flex; justify-content:space-between; align-items:center; gap:24px; padding:28px; margin-bottom:20px; border:1px solid var(--border); border-radius:var(--radius); background:linear-gradient(120deg,var(--white) 0%,#f5f9ff 100%); box-shadow:var(--shadow-sm); }
+.admin-profile-identity { display:flex; align-items:center; gap:20px; min-width:0; }
+.profile-avatar-large { width:82px; height:82px; flex:0 0 82px; border:4px solid var(--white); box-shadow:0 5px 18px rgba(31,78,121,.13); font-size:29px; }
+.profile-eyebrow { display:block; margin-bottom:6px; color:var(--text-light); font-size:9px; font-weight:800; letter-spacing:1.4px; }
+.profile-info h3 { font-size:22px; margin:0 0 5px; }
+.profile-info p { font-size:12px; margin:0 0 10px; overflow-wrap:anywhere; }
+.profile-role-badge { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; background:var(--primary-light); color:var(--primary); font-size:10px; font-weight:700; }
+.profile-role-icon { display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px; border-radius:50%; background:var(--primary); color:#fff; font-size:10px; }
+.profile-hero-side { min-width:180px; padding-left:24px; border-left:1px solid var(--border); }
+.profile-hero-side-label { display:block; margin-bottom:10px; color:var(--text-light); font-size:9px; font-weight:800; letter-spacing:1px; }
+.profile-hero-side strong { display:flex; align-items:center; gap:9px; color:var(--text-dark); font-size:13px; }
+.profile-hero-side small { display:block; margin-top:8px; color:var(--text-light); font-size:10px; }
+.profile-stat-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin-bottom:20px; }
+.profile-stat-card { display:flex; align-items:center; gap:14px; min-width:0; padding:20px; background:var(--white); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-sm); }
+.profile-stat-icon { display:flex; align-items:center; justify-content:center; width:43px; height:43px; flex:0 0 43px; border-radius:13px; font-size:21px; font-weight:700; }
+.profile-icon-blue { background:#eaf3ff; color:#2867a5; }.profile-icon-violet { background:#f0ebff; color:#7353c6; }.profile-icon-teal { background:#e4f8f4; color:#168b78; }.profile-icon-amber { background:#fff3df; color:#b77a16; }
+.profile-stat-card span { display:block; color:var(--text-light); font-size:10px; }
+.profile-stat-card strong { display:block; margin:5px 0 3px; color:var(--text-dark); font-size:25px; line-height:1.1; }
+.profile-stat-card small { color:var(--text-light); font-size:9px; }
+.profile-content-grid { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr); gap:20px; align-items:start; }
+.profile-edit-card,.profile-security-card { overflow:hidden; }
+.profile-card-heading { display:flex; align-items:center; gap:12px; padding:22px 22px 0; }
+.profile-heading-icon { display:flex; align-items:center; justify-content:center; width:38px; height:38px; flex:0 0 38px; border-radius:11px; background:var(--primary-light); color:var(--primary); font-size:19px; }
+.profile-heading-icon-secure { background:#e4f8f4; color:#168b78; }
+.profile-card-heading h3 { margin:0 0 5px; font-size:14px; }
+.profile-card-heading p { margin:0; color:var(--text-light); font-size:10px; line-height:1.5; }
+.profile-form-premium { max-width:none; padding:22px; }
+.profile-form-premium .form-group { margin-bottom:16px; }
+.profile-form-premium label { display:block; margin-bottom:7px; font-size:11px; font-weight:700; }
+.profile-form-premium input { width:100%; min-height:44px; }
+.profile-form-footer { display:flex; align-items:center; justify-content:space-between; gap:15px; padding-top:8px; }
+.profile-form-footer p { max-width:270px; margin:0; color:var(--text-light); font-size:10px; line-height:1.5; }
+.profile-form-footer .primary-btn { flex-shrink:0; }
+.profile-detail-row { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:15px 22px; border-bottom:1px solid var(--border); }
+.profile-detail-row:first-of-type { margin-top:15px; border-top:1px solid var(--border); }
+.profile-detail-row span { color:var(--text-light); font-size:11px; }
+.profile-detail-row strong { max-width:60%; color:var(--text-dark); font-size:11px; text-align:right; overflow-wrap:anywhere; }
+.profile-security-note { display:flex; gap:11px; margin:18px; padding:14px; border:1px solid #dce9f8; border-radius:10px; background:#f5f9ff; }
+.profile-security-note-icon { display:flex; align-items:center; justify-content:center; width:22px; height:22px; flex:0 0 22px; border-radius:50%; background:#dcecff; color:#2867a5; font-size:12px; font-weight:800; }
+.profile-security-note p { margin:0; color:var(--text-light); font-size:10px; line-height:1.65; }
+.profile-security-note strong { color:var(--text-dark); }
+@media (max-width:1100px) { .profile-stat-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }.profile-content-grid { grid-template-columns:1fr; } }
+@media (max-width:600px) { .admin-profile-hero { align-items:flex-start; flex-direction:column; padding:20px; }.admin-profile-identity { align-items:flex-start; gap:14px; }.profile-avatar-large { width:64px; height:64px; flex-basis:64px; }.profile-info h3 { font-size:18px; }.profile-hero-side { width:100%; padding:16px 0 0; border-left:0; border-top:1px solid var(--border); }.profile-stat-grid { gap:10px; }.profile-stat-card { align-items:flex-start; flex-direction:column; padding:14px; gap:10px; }.profile-stat-card strong { font-size:22px; }.profile-card-heading { padding:18px 16px 0; }.profile-form-premium { padding:18px 16px; }.profile-form-footer { align-items:flex-start; flex-direction:column; }.profile-form-footer .primary-btn { width:100%; }.profile-secure-pill { display:none; } }
+
+/* =========================================================
+   ATTENDANCE DESK — SETTINGS PAGE
+   ========================================================= */
+
+.settings-card {
+    padding: 26px;
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    padding: 23px 4px;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+    transition: background 0.25s ease;
+}
+
+.setting-item:first-child {
+    padding-top: 4px;
+}
+
+.setting-item:last-of-type {
+    border-bottom: none;
+}
+
+.setting-item > div {
+    flex: 1;
+    min-width: 0;
+}
+
+.setting-item h3 {
+    margin: 0 0 7px;
+    font-size: 15px;
+    font-weight: 650;
+    color: var(--text-dark, #1f2937);
+    letter-spacing: -0.2px;
+}
+
+.setting-item p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-light, #6b7280);
+}
+
+/* Save Preferences button */
+
+#saveSettingsBtn {
+    border: none;
+    border-radius: 10px;
+    padding: 12px 19px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#saveSettingsBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(36, 87, 131, 0.18);
+}
+
+#saveSettingsBtn:active {
+    transform: translateY(0);
+}
+
+/* Profile button */
+
+#openProfileSettingsBtn {
+    flex-shrink: 0;
+    border-radius: 9px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#openProfileSettingsBtn:hover {
+    transform: translateY(-1px);
+}
+
+/* Light / Dark theme selector */
+
+.settings-select {
+    min-width: 155px;
+    padding: 11px 35px 11px 13px;
+    border: 1px solid var(--border, #dbe1e8);
+    border-radius: 10px;
+    outline: none;
+    background: var(--white, #ffffff);
+    color: var(--text-dark, #1f2937);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.settings-select:focus {
+    border-color: #245783;
+    box-shadow: 0 0 0 3px rgba(36, 87, 131, 0.12);
+}
+
+/* Toggle switches */
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 47px;
+    height: 27px;
+    flex-shrink: 0;
+}
+
+.switch input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.switch .slider {
+    position: absolute;
+    inset: 0;
+    background: #cbd2dc;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: background 0.25s ease;
+}
+
+.switch .slider::before {
+    content: "";
+    position: absolute;
+    width: 19px;
+    height: 19px;
+    left: 4px;
+    top: 4px;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+    transition: transform 0.25s ease;
+}
+
+.switch input:checked + .slider {
+    background: #245783;
+}
+
+.switch input:checked + .slider::before {
+    transform: translateX(20px);
+}
+
+.switch input:focus-visible + .slider {
+    outline: 3px solid rgba(36, 87, 131, 0.25);
+    outline-offset: 3px;
+}
+
+/* Informational note */
+
+.settings-note {
+    margin: 14px 0 0;
+    padding: 13px 15px;
+    border-radius: 9px;
+    background: rgba(36, 87, 131, 0.06);
+    color: var(--text-light, #64748b);
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+/* Compact table preference */
+
+body.compact-tables table th,
+body.compact-tables table td {
+    padding-top: 7px !important;
+    padding-bottom: 7px !important;
+}
+
+/* Dark mode */
+
+body.dark-mode {
+    --white: #1e293b;
+    --text-dark: #f1f5f9;
+    --text-light: #aab8ca;
+    --border: #334155;
+
+    background-color: #0f172a;
+    color: #f1f5f9;
+}
+
+body.dark-mode .dashboard-card,
+body.dark-mode .settings-card {
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border-color: #334155;
+}
+
+body.dark-mode .setting-item {
+    border-bottom-color: #334155;
+}
+
+body.dark-mode .setting-item h3 {
+    color: #f1f5f9;
+}
+
+body.dark-mode .setting-item p,
+body.dark-mode .settings-note {
+    color: #aab8ca;
+}
+
+body.dark-mode .settings-note {
+    background: rgba(148, 163, 184, 0.09);
+}
+
+body.dark-mode .settings-select {
+    background: #0f172a;
+    color: #f1f5f9;
+    border-color: #475569;
+}
+
+body.dark-mode .switch input:checked + .slider {
+    background: #60a5fa;
+}
+
+/* Responsive design */
+
+@media (max-width: 768px) {
+    .settings-card {
+        padding: 18px;
+    }
+
+    .setting-item {
+        gap: 16px;
+        padding: 20px 0;
+    }
+
+    .section-top {
+        gap: 14px;
+        flex-wrap: wrap;
+    }
+
+    #saveSettingsBtn {
+        padding: 11px 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .setting-item {
+        gap: 12px;
+    }
+
+    .setting-item h3 {
+        font-size: 14px;
+    }
+
+    .setting-item p {
+        font-size: 12px;
+    }
+
+    .settings-select {
+        min-width: 125px;
+        max-width: 145px;
+        padding: 10px 7px;
+        font-size: 12px;
+    }
+
+    #openProfileSettingsBtn {
+        padding: 9px 11px;
+        font-size: 12px;
+    }
+
+    .settings-note {
+        font-size: 11px;
     }
 }

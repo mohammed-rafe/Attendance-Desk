@@ -201,6 +201,15 @@
 
                 <button
                     class="nav-item"
+                    data-section="subjectsSection"
+                >
+                    <span class="nav-icon">▦</span>
+                    <span>Manage Subjects</span>
+                </button>
+
+
+                <button
+                    class="nav-item"
                     data-section="attendanceSection"
                 >
                     <span class="nav-icon">✓</span>
@@ -900,6 +909,58 @@
 
 
             <!-- =====================================================
+                 MANAGE SUBJECTS
+            ====================================================== -->
+
+            <section
+                id="subjectsSection"
+                class="content-section"
+            >
+
+                <div class="section-top">
+                    <div>
+                        <h2>Manage Subjects</h2>
+                        <p>Add, edit and manage subjects for each class</p>
+                    </div>
+
+                    <button class="primary-btn" id="addSubjectBtn" type="button">
+                        + Add Subject
+                    </button>
+                </div>
+
+                <div class="filter-card">
+                    <div class="form-group">
+                        <label for="subjectClassFilter">Select Class</label>
+                        <select id="subjectClassFilter">
+                            <option value="">Select Class</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="dashboard-card full-width">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Subject ID</th>
+                                    <th>Subject Name</th>
+                                    <th>Class</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="subjectsTable">
+                                <tr>
+                                    <td colspan="4">Select a class to view subjects.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </section>
+
+
+            <!-- =====================================================
                  MARK ATTENDANCE
             ====================================================== -->
 
@@ -976,28 +1037,8 @@
                             Subject
                         </label>
 
-                        <select id="attendanceSubject">
-
-                            <option value="all">
-                                Select Subject
-                            </option>
-
-                            <option value="Java">
-                                Java
-                            </option>
-
-                            <option value="DBMS">
-                                DBMS
-                            </option>
-
-                            <option value="Web Programming">
-                                Web Programming
-                            </option>
-
-                            <option value="Data Science">
-                                Data Science
-                            </option>
-
+                        <select id="attendanceSubject" disabled>
+                            <option value="">Select class first</option>
                         </select>
 
                     </div>
@@ -1051,49 +1092,27 @@
                     </div>
 
 
-                    <div class="table-wrapper">
-
-                        <table>
-
-                            <thead>
-
-                                <tr>
-
-                                    <th>
-                                        #
-                                    </th>
-
-                                    <th>
-                                        Roll No.
-                                    </th>
-
-                                    <th>
-                                        Student Name
-                                    </th>
-
-                                    <th>
-                                        Status
-                                    </th>
-
-                                </tr>
-
-                            </thead>
-
-                            <tbody id="attendanceTable">
-
-                                <tr>
-
-                                    <td colspan="4">
-                                        Select class and load students.
-                                    </td>
-
-                                </tr>
-
-                            </tbody>
-
-                        </table>
-
-                    </div>
+                    
+<div class="attendance-table-wrapper">
+    <table class="attendance-table">
+        <thead>
+            <tr>
+                <th class="col-number">#</th>
+                <th class="col-roll">Roll No.</th>
+                <th>Student Name</th>
+                <th class="col-class">Class</th>
+                <th class="col-status">Attendance Status</th>
+            </tr>
+        </thead>
+        <tbody id="attendanceTable">
+            <tr>
+                <td colspan="5" class="attendance-empty">
+                    Select a class to load students.
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 
 
                     <div class="save-attendance-area">
@@ -1176,27 +1195,17 @@
                         </label>
 
                         <select id="recordClass">
-
-                            <option value="all">
-                                All Classes
-                            </option>
-
-                            <option value="FY BSc CS">
-                                FY BSc CS
-                            </option>
-
-                            <option value="SY BSc CS">
-                                SY BSc CS
-                            </option>
-
-                            <option value="TY BSc CS">
-                                TY BSc CS
-                            </option>
-
+                            <option value="all">All Classes</option>
                         </select>
 
                     </div>
 
+                    <div class="form-group">
+                        <label for="recordSubject">Subject</label>
+                        <select id="recordSubject">
+                            <option value="all">All Subjects</option>
+                        </select>
+                    </div>
 
                     <button
                         class="secondary-btn"
@@ -1207,6 +1216,8 @@
 
                 </div>
 
+
+                <div id="recordsSummary" class="report-cards" aria-live="polite"></div>
 
                 <div class="dashboard-card full-width">
 
@@ -1426,242 +1437,156 @@
                  PROFILE
             ====================================================== -->
 
-            <section
-                id="profileSection"
-                class="content-section"
-            >
-
-                <div class="section-top">
-
+            <section id="profileSection" class="content-section">
+                <div class="section-top profile-section-heading">
                     <div>
-
-                        <h2>
-                            Profile
-                        </h2>
-
-                        <p>
-                            Manage your account information
-                        </p>
-
+                        <h2>Admin Profile</h2>
+                        <p>Manage your administrator account and view account overview</p>
                     </div>
-
+                    <span class="profile-secure-pill"><span class="profile-secure-dot"></span> Administrator account</span>
                 </div>
 
-
-                <div class="profile-card">
-
-                    <div class="profile-avatar">
-                        A
+                <div class="admin-profile-hero">
+                    <div class="admin-profile-identity">
+                        <div class="profile-avatar profile-avatar-large" id="profileAvatar">A</div>
+                        <div class="profile-info">
+                            <span class="profile-eyebrow">YOUR ACCOUNT</span>
+                            <h3 id="profileDisplayName">Administrator</h3>
+                            <p id="profileDisplayEmail">admin@attendancedesk.com</p>
+                            <span class="profile-role-badge"><span class="profile-role-icon">✓</span> System Administrator</span>
+                        </div>
                     </div>
-
-
-                    <div class="profile-info">
-
-                        <h3>
-                            Administrator
-                        </h3>
-
-                        <p>
-                            admin@attendancedesk.com
-                        </p>
-
-                        <span>
-                            Administrator
-                        </span>
-
+                    <div class="profile-hero-side">
+                        <span class="profile-hero-side-label">ACCOUNT STATUS</span>
+                        <strong><span class="profile-status-dot"></span> Active</strong>
+                        <small>Local administrator profile</small>
                     </div>
-
                 </div>
 
-
-                <div class="dashboard-card">
-
-                    <h3>
-                        Personal Information
-                    </h3>
-
-
-                    <div class="profile-form">
-
-                        <div class="form-group">
-
-                            <label>
-                                Full Name
-                            </label>
-
-                            <input
-                                type="text"
-                                id="profileName"
-                                value="Administrator"
-                            >
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                            <label>
-                                Email
-                            </label>
-
-                            <input
-                                type="email"
-                                id="profileEmail"
-                                value="admin@attendancedesk.com"
-                            >
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                            <label>
-                                Phone
-                            </label>
-
-                            <input
-                                type="text"
-                                id="profilePhone"
-                                placeholder="Enter phone number"
-                            >
-
-                        </div>
-
-
-                        <button
-                            class="primary-btn"
-                            id="saveProfileBtn"
-                        >
-                            Save Changes
-                        </button>
-
-                    </div>
-
+                <div class="profile-stat-grid">
+                    <article class="profile-stat-card">
+                        <div class="profile-stat-icon profile-icon-blue">♙</div>
+                        <div><span>Students Managed</span><strong id="profileStudentCount">0</strong><small>Student records</small></div>
+                    </article>
+                    <article class="profile-stat-card">
+                        <div class="profile-stat-icon profile-icon-violet">▦</div>
+                        <div><span>Classes</span><strong id="profileClassCount">0</strong><small>Available classes</small></div>
+                    </article>
+                    <article class="profile-stat-card">
+                        <div class="profile-stat-icon profile-icon-teal">▤</div>
+                        <div><span>Subjects</span><strong id="profileSubjectCount">0</strong><small>Configured subjects</small></div>
+                    </article>
+                    <article class="profile-stat-card">
+                        <div class="profile-stat-icon profile-icon-amber">✓</div>
+                        <div><span>Attendance Entries</span><strong id="profileAttendanceCount">0</strong><small>Loaded records</small></div>
+                    </article>
                 </div>
 
+                <div class="profile-content-grid">
+                    <div class="dashboard-card profile-edit-card">
+                        <div class="profile-card-heading">
+                            <div class="profile-heading-icon">✎</div>
+                            <div><h3>Personal Information</h3><p>Update the name and contact details shown in your workspace.</p></div>
+                        </div>
+                        <form id="profileForm" class="profile-form profile-form-premium">
+                            <div class="form-group"><label for="profileName">Full Name</label><input type="text" id="profileName" name="profileName" autocomplete="name" maxlength="100" required></div>
+                            <div class="form-group"><label for="profileEmail">Email Address</label><input type="email" id="profileEmail" name="profileEmail" autocomplete="email" maxlength="150" required></div>
+                            <div class="form-group"><label for="profilePhone">Phone Number</label><input type="tel" id="profilePhone" name="profilePhone" autocomplete="tel" maxlength="25" placeholder="Enter phone number"></div>
+                            <div class="profile-form-footer"><p>Changes are saved to this browser's local session.</p><button type="submit" class="primary-btn" id="saveProfileBtn">Save Changes</button></div>
+                        </form>
+                    </div>
+
+                    <aside class="dashboard-card profile-security-card">
+                        <div class="profile-card-heading">
+                            <div class="profile-heading-icon profile-heading-icon-secure">♢</div>
+                            <div><h3>Account Overview</h3><p>Basic details for your current session.</p></div>
+                        </div>
+                        <div class="profile-detail-row"><span>Username</span><strong id="profileUsername">admin</strong></div>
+                        <div class="profile-detail-row"><span>Role</span><strong>Administrator</strong></div>
+                        <div class="profile-detail-row"><span>Sign-in mode</span><strong>Demo / local session</strong></div>
+                        <div class="profile-security-note"><span class="profile-security-note-icon">i</span><p><strong>Security note</strong><br>Profile edits currently stay in local storage. Password changes and server-side profile persistence need a dedicated backend endpoint.</p></div>
+                    </aside>
+                </div>
             </section>
-
 
 
             <!-- =====================================================
                  SETTINGS
             ====================================================== -->
 
-            <section
-                id="settingsSection"
-                class="content-section"
-            >
+            
+<section id="settingsSection" class="content-section">
+    <div class="section-top">
+        <div>
+            <h2>Settings</h2>
+            <p>Personalise your Attendance Desk experience</p>
+        </div>
+        <button type="button" class="primary-btn" id="saveSettingsBtn">
+            Save Preferences
+        </button>
+    </div>
 
-                <div class="section-top">
+    <div class="dashboard-card settings-card">
+        <div class="setting-item">
+            <div>
+                <h3>Notifications</h3>
+                <p>Enable in-app success, warning and error alerts.</p>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="notificationSetting" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
 
-                    <div>
+        <div class="setting-item">
+            <div>
+                <h3>Email Reports</h3>
+                <p>Choose whether you want attendance reports by email.</p>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="emailReportSetting">
+                <span class="slider"></span>
+            </label>
+        </div>
 
-                        <h2>
-                            Settings
-                        </h2>
+        <div class="setting-item">
+            <div>
+                <h3>Compact Tables</h3>
+                <p>Show more records by reducing table row spacing.</p>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="compactTableSetting">
+                <span class="slider"></span>
+            </label>
+        </div>
 
-                        <p>
-                            Configure Attendance Desk
-                        </p>
+        <div class="setting-item">
+            <div>
+                <h3>Appearance</h3>
+                <p>Choose your preferred dashboard theme.</p>
+            </div>
+            <select id="themeSelect" class="settings-select">
+                <option value="light">Light Mode</option>
+                <option value="dark">Dark Mode</option>
+            </select>
+        </div>
 
-                    </div>
+        <div class="setting-item">
+            <div>
+                <h3>Security & Account</h3>
+                <p>Manage your administrator profile and contact details.</p>
+            </div>
+            <button type="button" class="secondary-btn"
+                    id="openProfileSettingsBtn">
+                Open Profile
+            </button>
+        </div>
 
-                </div>
-
-
-                <div class="dashboard-card settings-card">
-
-                    <div class="setting-item">
-
-                        <div>
-
-                            <h3>
-                                Notifications
-                            </h3>
-
-                            <p>
-                                Receive attendance notifications
-                            </p>
-
-                        </div>
-
-                        <label class="switch">
-
-                            <input
-                                type="checkbox"
-                                id="notificationSetting"
-                                checked
-                            >
-
-                            <span class="slider"></span>
-
-                        </label>
-
-                    </div>
-
-
-                    <div class="setting-item">
-
-                        <div>
-
-                            <h3>
-                                Email Reports
-                            </h3>
-
-                            <p>
-                                Receive regular attendance reports
-                            </p>
-
-                        </div>
-
-                        <label class="switch">
-
-                            <input
-                                type="checkbox"
-                                id="emailReportSetting"
-                            >
-
-                            <span class="slider"></span>
-
-                        </label>
-
-                    </div>
-
-
-                    <div class="setting-item">
-
-                        <div>
-
-                            <h3>
-                                Compact Tables
-                            </h3>
-
-                            <p>
-                                Use smaller table rows
-                            </p>
-
-                        </div>
-
-                        <label class="switch">
-
-                            <input
-                                type="checkbox"
-                                id="compactTableSetting"
-                            >
-
-                            <span class="slider"></span>
-
-                        </label>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-        </main>
-
-    </section>
+        <p class="settings-note">
+            Email delivery and password changes require backend support.
+        </p>
+    </div>
+</section>
 
 
 
@@ -1835,6 +1760,61 @@
 
     </div>
 
+
+
+    <!-- =========================================================
+         ADD / EDIT SUBJECT MODAL
+    ========================================================== -->
+
+    <div class="modal-overlay hidden" id="subjectModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div>
+                    <h2 id="subjectModalTitle">Add Subject</h2>
+                    <p>Enter subject details</p>
+                </div>
+
+                <button class="modal-close" id="closeSubjectModal" type="button">
+                    ×
+                </button>
+            </div>
+
+            <form id="subjectForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="subjectNameInput">Subject Name</label>
+                        <input
+                            type="text"
+                            id="subjectNameInput"
+                            placeholder="e.g. Java Programming"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subjectClassInput">Class</label>
+                        <select id="subjectClassInput" required>
+                            <option value="">Select Class</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button
+                        type="button"
+                        class="outline-btn"
+                        id="cancelSubjectBtn"
+                    >
+                        Cancel
+                    </button>
+
+                    <button type="submit" class="primary-btn" id="saveSubjectBtn">
+                        Save Subject
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
 
     <!-- =========================================================

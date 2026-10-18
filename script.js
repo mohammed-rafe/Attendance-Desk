@@ -1,9 +1,19 @@
+/* =========================================================
+   ATTENDANCE DESK
+   Frontend: HTML, CSS, JavaScript
+   Backend: Java Spring Boot
+   Database: MySQL
+   ========================================================= */
+
 const API_BASE_URL = "http://localhost:8080/api";
 
 let students = [];
 let classes = [];
 let attendanceRecords = [];
+let subjects = [];
 let currentAttendance = {};
+let editingSubjectId = null;
+let editingStudentId = null;
 
 let currentUser = {
     username: "admin",
@@ -13,41 +23,160 @@ let currentUser = {
     phone: ""
 };
 
-document.addEventListener("DOMContentLoaded", () => {
-    initializeApp();
-});
+const SETTINGS_KEY = "attendanceDeskSettings";
+const SESSION_KEY = "attendanceDeskUser";
 
-async function initializeApp() {
-    setupLogin();
-    setupNavigation();
-    setupStudents();
-    setupAttendance();
-    setupRecords();
-    setupReports();
-    setupProfile();
-    setupSettings();
-    setupLogout();
-    setupMobileMenu();
-    setupToast();
-    setupGlobalEvents();
+const DEFAULT_SETTINGS = {
+    theme: "light",
+    notifications: true,
+    itemsPerPage: 10
+};
 
-    updateDate();
-    setDefaultDates();
-    loadSettings();
-    loadSavedSession();
-
-    await loadClassesFromDatabase();
-    await loadStudentsFromDatabase();
-
-    renderStudents();
-    renderDashboard();
-    renderRecords();
-    renderReports();
-}
+/* =========================================================
+   HELPERS
+   ========================================================= */
 
 function $(id) {
     return document.getElementById(id);
 }
+
+function escapeHTML(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function getStudentId(student) {
+    return student?.studentId ?? student?.student_id ?? student?.id;
+}
+
+function getRoll(student) {
+    return student?.rollNumber ??
+        student?.roll_number ??
+        student?.roll ?? "";
+}
+
+function getStudentName(student) {
+    return student?.studentName ??
+        student?.student_name ??
+        student?.name ?? "";
+}
+
+function getClassId(student) {
+    return student?.classId ?? student?.class_id ?? null;
+}
+
+function getTodayDate() {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+}
+
+function formatDate(value) {
+    if (!value) return "-";
+
+    const text = String(value);
+    const datePart = text.match(/^\d{4}-\d{2}-\d{2}/);
+
+    if (datePart) {
+        const [year, month, day] = datePart[0].split("-");
+        return `${day}-${month}-${year}`;
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return text;
+
+    return date.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+    });
+}
+
+async function apiRequest(path, options = {}) {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+        ...options,
+        headers: {
+            ...(options.body
+                ? { "Content-Type": "application/json" }
+                : {}),
+            ...options.headers
+        }
+    });
+
+    if (!response.ok) {
+        let message = `HTTP ${response.status}`;
+
+        try {
+            const body = await response.json();
+            message = body.message || body.error || message;
+        } catch {
+            try {
+                message = (await response.text()) || message;
+            } catch {}
+        }
+
+        throw new Error(message);
+    }
+
+    if (response.status === 204) return null;
+
+    const text = await response.text();
+    return text ? JSON.parse(text) : null;
+}
+
+
+function showToast(title, message, type = "info") {
+    const container = document.getElementById("toastContainer");
+
+    if (!container) {
+        console.log(`[${type}] ${title}: ${message}`);
+        return;
+    }
+
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+
+    toast.innerHTML = `
+        <span class="toast-icon">
+            ${type === "success" ? "✓" : type === "error" ? "!" : "i"}
+        </span>
+        <div>
+            <strong>${escapeHTML(title)}</strong>
+            <p>${escapeHTML(message)}</p>
+        </div>
+        <button type="button" aria-label="Close notification">×</button>
+    `;
+
+    container.appendChild(toast);
+
+    // CSS ki .toast.show styling activate karo
+    requestAnimationFrame(() => {
+        toast.classList.add("show");
+    });
+
+    const closeButton = toast.querySelector("button");
+
+    closeButton.addEventListener("click", () => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 300);
+    });
+
+    setTimeout(() => {
+        if (toast.isConnected) {
+            toast.classList.remove("show");
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 3500);
+}
+
 
 function updateDate() {
     const now = new Date();
@@ -59,107 +188,96 @@ function updateDate() {
         day: "numeric"
     });
 
-    if ($("currentDate")) {
-        $("currentDate").textContent = formatted;
-    }
-
-    if ($("dashboardDate")) {
-        $("dashboardDate").textContent = formatted;
-    }
+    if ($("currentDate")) $("currentDate").textContent = formatted;
+    if ($("dashboardDate")) $("dashboardDate").textContent = formatted;
 }
 
-function getTodayDate() {
-    const date = new Date();
+function setDefaultDates() {
+    [
+        "attendanceDate",
+        "recordStartDate",
+        "recordEndDate",
+        "recordFromDate",
+        "recordToDate",
+        "reportStartDate",
+        "reportEndDate"
+    ].forEach(id => {
+        const element = $(id);
 
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-}
-
-function formatDate(value) {
-    if (!value) return "-";
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-        return value;
-    }
-
-    return date.toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric"
+        if (element && !element.value) {
+            element.value = getTodayDate();
+        }
     });
 }
 
+/* =========================================================
+   INITIALIZATION
+   ========================================================= */
+
+document.addEventListener("DOMContentLoaded", initializeApp);
+
+async function initializeApp() {
+    setupLogin();
+    setupNavigation();
+    setupStudents();
+    setupSubjects();
+    setupAttendance();
+    setupRecords();
+    setupReports();
+    setupProfile();
+    setupSettings();
+    setupLogout();
+    setupMobileMenu();
+    setupGlobalEvents();
+
+    updateDate();
+    setDefaultDates();
+    loadSettings();
+    loadSavedSession();
+
+    await loadClassesFromDatabase();
+    await loadSubjectsFromDatabase();
+    await loadStudentsFromDatabase();
+    await loadAttendanceFromDatabase();
+
+    populateRecordSubjectDropdown();
+    renderStudents();
+    renderDashboard();
+    renderRecords();
+    renderReports();
+    updateProfileStats();
+}
+
+/* =========================================================
+   CLASSES
+   ========================================================= */
+
 async function loadClassesFromDatabase() {
     try {
-        const response = await fetch(`${API_BASE_URL}/classes`);
-
-        if (!response.ok) {
-            throw new Error(`Server returned ${response.status}`);
-        }
-
-        const data = await response.json();
+        const data = await apiRequest("/classes");
 
         classes = Array.isArray(data)
             ? data.map(item => ({
-                classId: item.classId,
-                className: item.className || "",
-                division: item.division || ""
+                classId: item.classId ?? item.class_id ?? item.id,
+                className: item.className ??
+                    item.class_name ?? item.name ?? "",
+                division: item.division ?? item.section ?? ""
             }))
             : [];
 
         populateClassDropdowns();
-
-        console.log("Classes loaded from MySQL:", classes);
+        populateAttendanceSubjectDropdown();
+        console.log("Classes:", classes);
     } catch (error) {
-        console.error("Class loading error:", error);
+        console.error("Load classes:", error);
 
         classes = [];
         populateClassDropdowns();
+        populateAttendanceSubjectDropdown();
 
         showToast(
             "Database Error",
-            "Classes could not be loaded from the database.",
-            "error"
-        );
-    }
-}
-
-async function loadStudentsFromDatabase() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/students`);
-
-        if (!response.ok) {
-            throw new Error(`Server returned ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        students = Array.isArray(data)
-            ? data.map(student => ({
-                id: student.studentId,
-                roll: student.rollNumber || "",
-                name: student.studentName || "",
-                email: student.email || "",
-                phone: student.phone || "",
-                classId: student.classId,
-                className: getClassNameFromId(student.classId)
-            }))
-            : [];
-
-        console.log("Students loaded from MySQL:", students);
-    } catch (error) {
-        console.error("Student loading error:", error);
-
-        students = [];
-
-        showToast(
-            "Database Error",
-            "Students could not be loaded from the database.",
+            "Classes could not be loaded.",
             "error"
         );
     }
@@ -170,38 +288,29 @@ function populateClassDropdowns() {
         "studentClass",
         "attendanceClass",
         "recordClass",
-        "classFilter"
+        "classFilter",
+        "reportClass",
+        "subjectClassFilter",
+        "subjectClassInput"
     ];
 
     dropdownIds.forEach(id => {
         const select = $(id);
-
         if (!select) return;
 
-        const oldValue = select.value;
-        const isFilter =
-            id === "classFilter" ||
-            id === "recordClass";
+        const previous = select.value;
+        const isFilter = ["classFilter", "recordClass", "reportClass", "subjectClassFilter"].includes(id);
 
         select.innerHTML = "";
 
-        const defaultOption = document.createElement("option");
-
-        if (isFilter) {
-            defaultOption.value = "all";
-            defaultOption.textContent = "All Classes";
-        } else {
-            defaultOption.value = "";
-            defaultOption.textContent = "Select Class";
-        }
-
-        select.appendChild(defaultOption);
+        const first = document.createElement("option");
+        first.value = isFilter ? "all" : "";
+        first.textContent = isFilter ? "All Classes" : "Select Class";
+        select.appendChild(first);
 
         classes.forEach(item => {
             const option = document.createElement("option");
-
             option.value = String(item.classId);
-
             option.textContent = item.division
                 ? `${item.className} - ${item.division}`
                 : item.className;
@@ -209,21 +318,15 @@ function populateClassDropdowns() {
             select.appendChild(option);
         });
 
-        if (
-            oldValue &&
-            [...select.options].some(
-                option => option.value === oldValue
-            )
-        ) {
-            select.value = oldValue;
+        if ([...select.options].some(option => option.value === previous)) {
+            select.value = previous;
         }
     });
 }
 
 function getClassNameFromId(classId) {
     const item = classes.find(
-        value =>
-            Number(value.classId) === Number(classId)
+        value => String(value.classId) === String(classId)
     );
 
     if (!item) return "";
@@ -233,100 +336,223 @@ function getClassNameFromId(classId) {
         : item.className;
 }
 
+/* =========================================================
+   SUBJECTS: CRUD AND CLASS-WISE DROPDOWN
+   ========================================================= */
+
+function normalizeSubject(item) {
+    const classId = item.classId ?? item.class_id ??
+        item.schoolClass?.classId ?? item.schoolClass?.class_id ??
+        item.schoolClass?.id ?? item.class?.classId ?? item.class?.id ?? null;
+    return {
+        subjectId: item.subjectId ?? item.subject_id ?? item.id,
+        subjectName: item.subjectName ?? item.subject_name ?? item.name ?? "",
+        classId,
+        className: item.className ?? item.class_name ??
+            item.schoolClass?.className ?? item.schoolClass?.class_name ??
+            item.class?.className ?? ""
+    };
+}
+
+async function loadSubjectsFromDatabase() {
+    try {
+        const data = await apiRequest("/subjects");
+        subjects = Array.isArray(data) ? data.map(normalizeSubject) : [];
+        renderSubjects();
+        populateAttendanceSubjectDropdown();
+        attendanceRecords = attendanceRecords.map(record => ({
+            ...record,
+            subjectName: record.subjectName || getSubjectNameFromId(record.subjectId)
+        }));
+        renderRecords();
+        renderReports();
+    } catch (error) {
+        console.error("Load subjects:", error);
+        subjects = [];
+        renderSubjects();
+        populateAttendanceSubjectDropdown();
+        showToast("Subjects Error", "Subjects could not be loaded from /api/subjects.", "error");
+    }
+}
+
+function setupSubjects() {
+    $("addSubjectBtn")?.addEventListener("click", () => openSubjectModal());
+    $("closeSubjectModal")?.addEventListener("click", closeSubjectModal);
+    $("cancelSubjectBtn")?.addEventListener("click", closeSubjectModal);
+    $("subjectForm")?.addEventListener("submit", saveSubject);
+    $("subjectClassFilter")?.addEventListener("change", renderSubjects);
+}
+
+function openSubjectModal(subject = null) {
+    if (!( $("subjectModal") && $("subjectForm") )) {
+        showToast("HTML Missing", "Subject modal is missing from index.html.", "error");
+        return;
+    }
+    $("subjectForm").reset();
+    editingSubjectId = subject ? subject.subjectId : null;
+    if ($("subjectModalTitle")) $("subjectModalTitle").textContent = subject ? "Edit Subject" : "Add Subject";
+    if ($("subjectNameInput")) $("subjectNameInput").value = subject?.subjectName || "";
+    if ($("subjectClassInput")) $("subjectClassInput").value = subject?.classId != null ? String(subject.classId) : "";
+    if ($("saveSubjectBtn")) $("saveSubjectBtn").textContent = subject ? "Update Subject" : "Save Subject";
+    $("subjectModal").classList.remove("hidden");
+    $("subjectNameInput")?.focus();
+}
+
+function closeSubjectModal() {
+    $("subjectModal")?.classList.add("hidden");
+    $("subjectForm")?.reset();
+    editingSubjectId = null;
+    if ($("saveSubjectBtn")) $("saveSubjectBtn").textContent = "Save Subject";
+}
+
+async function saveSubject(event) {
+    event.preventDefault();
+    const subjectName = $("subjectNameInput")?.value.trim() || "";
+    const classId = $("subjectClassInput")?.value || "";
+    if (!subjectName || !classId) {
+        showToast("Missing Information", "Enter subject name and select a class.", "error");
+        return;
+    }
+    const duplicate = subjects.find(item =>
+        String(item.classId) === String(classId) &&
+        item.subjectName.toLowerCase() === subjectName.toLowerCase() &&
+        String(item.subjectId) !== String(editingSubjectId)
+    );
+    if (duplicate) {
+        showToast("Duplicate Subject", "This subject already exists for this class.", "error");
+        return;
+    }
+    const payload = { subjectName, classId: Number(classId) };
+    const wasEditing = editingSubjectId !== null;
+    const button = $("saveSubjectBtn");
+    if (button) button.disabled = true;
+    try {
+        if (wasEditing) {
+            await apiRequest(`/subjects/${encodeURIComponent(editingSubjectId)}`, {
+                method: "PUT", body: JSON.stringify(payload)
+            });
+        } else {
+            await apiRequest("/subjects", { method: "POST", body: JSON.stringify(payload) });
+        }
+        await loadSubjectsFromDatabase();
+        closeSubjectModal();
+        showToast(wasEditing ? "Subject Updated" : "Subject Added", "Subject saved successfully.", "success");
+    } catch (error) {
+        console.error("Save subject:", error);
+        showToast("Save Failed", `${error.message}. Check your Spring Boot subject API fields.`, "error");
+    } finally {
+        if (button) button.disabled = false;
+    }
+}
+
+function renderSubjects() {
+    const table = $("subjectsTable");
+    if (!table) return;
+    const selectedClass = $("subjectClassFilter")?.value || "all";
+    let list = [...subjects];
+    if (selectedClass !== "all" && selectedClass !== "") {
+        list = list.filter(item => String(item.classId) === String(selectedClass));
+    }
+    if (!list.length) {
+        table.innerHTML = `<tr><td colspan="4" class="empty-state">No subjects found. Add a subject for a class.</td></tr>`;
+        return;
+    }
+    table.innerHTML = list.map(item => `
+        <tr>
+            <td>${escapeHTML(item.subjectName || "-")}</td>
+            <td>${escapeHTML(item.className || getClassNameFromId(item.classId) || "-")}</td>
+            <td>${escapeHTML(item.subjectId ?? "-")}</td>
+            <td><div class="table-actions">
+                <button class="btn btn-sm btn-secondary" data-action="edit-subject" data-id="${escapeHTML(item.subjectId)}">Edit</button>
+                <button class="btn btn-sm btn-danger" data-action="delete-subject" data-id="${escapeHTML(item.subjectId)}">Delete</button>
+            </div></td>
+        </tr>`).join("");
+}
+
+async function deleteSubject(id) {
+    const subject = subjects.find(item => String(item.subjectId) === String(id));
+    if (!subject || !confirm(`Delete subject "${subject.subjectName}"? Existing attendance may depend on it.`)) return;
+    try {
+        await apiRequest(`/subjects/${encodeURIComponent(id)}`, { method: "DELETE" });
+        await loadSubjectsFromDatabase();
+        await loadAttendanceFromDatabase();
+        renderRecords();
+        renderReports();
+        showToast("Subject Deleted", "Subject deleted successfully.", "success");
+    } catch (error) {
+        console.error("Delete subject:", error);
+        showToast("Delete Failed", `${error.message}. Existing attendance may be using this subject.`, "error");
+    }
+}
+
+function populateAttendanceSubjectDropdown() {
+    const select = $("attendanceSubject");
+    if (!select) return;
+    const previous = select.value;
+    const classId = $("attendanceClass")?.value || "";
+    select.innerHTML = "";
+    const first = document.createElement("option");
+    first.value = "";
+    first.textContent = classId ? "Select Subject" : "Select class first";
+    select.appendChild(first);
+    const list = classId ? subjects.filter(item => String(item.classId) === String(classId)) : [];
+    list.forEach(item => {
+        const option = document.createElement("option");
+        option.value = String(item.subjectId);
+        option.textContent = item.subjectName;
+        select.appendChild(option);
+    });
+    select.disabled = !classId || list.length === 0;
+    if (list.some(item => String(item.subjectId) === previous)) select.value = previous;
+}
+
+function getSubjectNameFromId(subjectId) {
+    const subject = subjects.find(item => String(item.subjectId) === String(subjectId));
+    return subject?.subjectName || "";
+}
+
+/* =========================================================
+   LOGIN AND SESSION
+   Demo credentials: admin / admin123
+   ========================================================= */
+
 function setupLogin() {
-    const form = $("loginForm");
+    $("loginForm")?.addEventListener("submit", handleLogin);
 
-    if (form) {
-        form.addEventListener("submit", handleLogin);
-    }
+    $("forgotPassword")?.addEventListener("click", event => {
+        event.preventDefault();
 
-    if ($("forgotPassword")) {
-        $("forgotPassword").addEventListener(
-            "click",
-            event => {
-                event.preventDefault();
-
-                showToast(
-                    "Forgot Password",
-                    "Please contact the administrator to reset your password.",
-                    "info"
-                );
-            }
+        showToast(
+            "Forgot Password",
+            "Please contact the administrator to reset your password.",
+            "info"
         );
-    }
+    });
 }
 
 function handleLogin(event) {
     event.preventDefault();
 
-    const username = $("loginUsername")
-        ? $("loginUsername").value.trim()
-        : "";
+    const username = $("loginUsername")?.value.trim() || "";
+    const password = $("loginPassword")?.value || "";
 
-    const password = $("loginPassword")
-        ? $("loginPassword").value.trim()
-        : "";
+    if ($("usernameError")) $("usernameError").textContent = "";
+    if ($("passwordError")) $("passwordError").textContent = "";
 
-    if ($("usernameError")) {
-        $("usernameError").textContent = "";
-    }
-
-    if ($("passwordError")) {
-        $("passwordError").textContent = "";
-    }
-
-    let valid = true;
-
-    if (!username) {
-        if ($("usernameError")) {
-            $("usernameError").textContent =
-                "Username is required.";
+    if (!username || !password) {
+        if (!username && $("usernameError")) {
+            $("usernameError").textContent = "Username is required.";
         }
 
-        valid = false;
-    }
-
-    if (!password) {
-        if ($("passwordError")) {
-            $("passwordError").textContent =
-                "Password is required.";
+        if (!password && $("passwordError")) {
+            $("passwordError").textContent = "Password is required.";
         }
 
-        valid = false;
+        return;
     }
 
-    if (!valid) return;
-
-    if (
-        username === "admin" &&
-        password === "admin123"
-    ) {
-        currentUser = {
-            username: "admin",
-            name: "Administrator",
-            role: "Administrator",
-            email: "admin@attendancedesk.com",
-            phone: ""
-        };
-
-        if (
-            $("rememberMe") &&
-            $("rememberMe").checked
-        ) {
-            localStorage.setItem(
-                "attendanceDeskUser",
-                JSON.stringify(currentUser)
-            );
-        }
-
-        showMainApplication();
-
-        showToast(
-            "Welcome",
-            "Login successful.",
-            "success"
-        );
-    } else {
+    // Demo-only login. Not a secure backend authentication system.
+    if (username !== "admin" || password !== "admin123") {
         if ($("passwordError")) {
             $("passwordError").textContent =
                 "Invalid username or password.";
@@ -334,20 +560,31 @@ function handleLogin(event) {
 
         showToast(
             "Login Failed",
-            "Please check your username and password.",
+            "Check your login details.",
             "error"
         );
+        return;
     }
+
+    currentUser = {
+        username: "admin",
+        name: "Administrator",
+        role: "Administrator",
+        email: "admin@attendancedesk.com",
+        phone: ""
+    };
+
+    if ($("rememberMe")?.checked) {
+        localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+    }
+
+    showMainApplication();
+    showToast("Welcome", "Login successful.", "success");
 }
 
 function showMainApplication() {
-    if ($("loginPage")) {
-        $("loginPage").classList.add("hidden");
-    }
-
-    if ($("mainApp")) {
-        $("mainApp").classList.remove("hidden");
-    }
+    $("loginPage")?.classList.add("hidden");
+    $("mainApp")?.classList.remove("hidden");
 
     if ($("topbarUserName")) {
         $("topbarUserName").textContent =
@@ -358,247 +595,245 @@ function showMainApplication() {
 }
 
 function loadSavedSession() {
-    const saved =
-        localStorage.getItem("attendanceDeskUser");
-
-    if (!saved) return;
-
     try {
+        const saved = localStorage.getItem(SESSION_KEY);
+        if (!saved) return;
+
         currentUser = JSON.parse(saved);
         showMainApplication();
     } catch {
-        localStorage.removeItem("attendanceDeskUser");
+        localStorage.removeItem(SESSION_KEY);
     }
 }
 
 function setupLogout() {
-    if (!$("logoutBtn")) return;
+    $("logoutBtn")?.addEventListener("click", () => {
+        localStorage.removeItem(SESSION_KEY);
 
-    $("logoutBtn").addEventListener("click", () => {
-        localStorage.removeItem("attendanceDeskUser");
-
-        if ($("mainApp")) {
-            $("mainApp").classList.add("hidden");
-        }
-
-        if ($("loginPage")) {
-            $("loginPage").classList.remove("hidden");
-        }
-
-        if ($("loginForm")) {
-            $("loginForm").reset();
-        }
+        $("mainApp")?.classList.add("hidden");
+        $("loginPage")?.classList.remove("hidden");
+        $("loginForm")?.reset();
 
         showToast(
             "Logged Out",
-            "You have been logged out successfully.",
+            "You have been logged out.",
             "success"
         );
     });
 }
 
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
 function setupNavigation() {
-    document
-        .querySelectorAll(".nav-item")
-        .forEach(item => {
-            item.addEventListener("click", () => {
-                const section = item.dataset.section;
+    document.querySelectorAll(".nav-item").forEach(item => {
+        item.addEventListener("click", () => {
+            const section = item.dataset.section;
+            if (!section) return;
 
-                if (!section) return;
-
-                document
-                    .querySelectorAll(".nav-item")
-                    .forEach(nav =>
-                        nav.classList.remove("active")
-                    );
-
-                item.classList.add("active");
-
-                document
-                    .querySelectorAll(".content-section")
-                    .forEach(sectionElement =>
-                        sectionElement.classList.remove("active")
-                    );
-
-                const target = $(section);
-
-                if (target) {
-                    target.classList.add("active");
-                }
-
-                updatePageHeader(section);
-
-                if (
-                    window.innerWidth <= 768 &&
-                    document.querySelector(".sidebar")
-                ) {
-                    document
-                        .querySelector(".sidebar")
-                        .classList.remove("open");
-                }
+            document.querySelectorAll(".nav-item").forEach(nav => {
+                nav.classList.remove("active");
             });
+
+            item.classList.add("active");
+
+            document.querySelectorAll(".content-section").forEach(element => {
+                element.classList.remove("active-section");
+            });
+
+            $(section)?.classList.add("active-section");
+            updatePageHeader(section);
+
+            if (window.innerWidth <= 768) {
+                document.querySelector(".sidebar")?.classList.remove("open");
+            }
+
+            if (section === "studentsSection") renderStudents();
+            if (section === "subjectsSection") renderSubjects();
+            if (section === "dashboardSection") renderDashboard();
+            if (section === "recordsSection") renderRecords();
+            if (section === "reportsSection") renderReports();
         });
-}
-
-function updatePageHeader(section) {
-    const pageData = {
-        dashboard: [
-            "Dashboard",
-            "Overview of attendance activity"
-        ],
-        students: [
-            "Students",
-            "Manage student records"
-        ],
-        attendance: [
-            "Mark Attendance",
-            "Record daily student attendance"
-        ],
-        records: [
-            "Attendance Records",
-            "View and filter attendance records"
-        ],
-        reports: [
-            "Reports",
-            "Attendance reports and analytics"
-        ],
-        profile: [
-            "Profile",
-            "Manage your profile information"
-        ],
-        settings: [
-            "Settings",
-            "Manage application settings"
-        ]
-    };
-
-    const data = pageData[section];
-
-    if (!data) return;
-
-    if ($("pageTitle")) {
-        $("pageTitle").textContent = data[0];
-    }
-
-    if ($("pageSubtitle")) {
-        $("pageSubtitle").textContent = data[1];
-    }
-}
-
-function setupMobileMenu() {
-    const button = $("mobileMenuBtn");
-    const sidebar = document.querySelector(".sidebar");
-
-    if (!button || !sidebar) return;
-
-    button.addEventListener("click", () => {
-        sidebar.classList.toggle("open");
     });
 }
 
-function setupStudents() {
-    if ($("addStudentBtn")) {
-        $("addStudentBtn").addEventListener(
-            "click",
-            openStudentModal
-        );
-    }
+function updatePageHeader(section) {
+    const data = {
+        dashboardSection: [
+            "Dashboard",
+            "Overview of attendance activity"
+        ],
+        studentsSection: [
+            "Students",
+            "Manage student records"
+        ],
+        subjectsSection: [
+            "Manage Subjects",
+            "Create and manage subjects for each class"
+        ],
+        attendanceSection: [
+            "Mark Attendance",
+            "Record daily student attendance"
+        ],
+        recordsSection: [
+            "Attendance Records",
+            "View and filter attendance records"
+        ],
+        reportsSection: [
+            "Reports",
+            "Attendance reports and analytics"
+        ],
+        profileSection: [
+            "Profile",
+            "Manage your profile information"
+        ],
+        settingsSection: [
+            "Settings",
+            "Manage application settings"
+        ]
+    }[section];
 
-    if ($("closeStudentModal")) {
-        $("closeStudentModal").addEventListener(
-            "click",
-            closeStudentModal
-        );
-    }
+    if (!data) return;
 
-    if ($("cancelStudentBtn")) {
-        $("cancelStudentBtn").addEventListener(
-            "click",
-            closeStudentModal
-        );
-    }
-
-    if ($("studentForm")) {
-        $("studentForm").addEventListener(
-            "submit",
-            addStudent
-        );
-    }
-
-    if ($("studentSearch")) {
-        $("studentSearch").addEventListener(
-            "input",
-            renderStudents
-        );
-    }
-
-    if ($("classFilter")) {
-        $("classFilter").addEventListener(
-            "change",
-            renderStudents
-        );
-    }
+    if ($("pageTitle")) $("pageTitle").textContent = data[0];
+    if ($("pageSubtitle")) $("pageSubtitle").textContent = data[1];
 }
 
-function openStudentModal() {
-    const modal = $("studentModal");
-
-    if (!modal) return;
-
-    modal.classList.remove("hidden");
-
-    if ($("studentRoll")) {
-        $("studentRoll").focus();
-    }
+function setupMobileMenu() {
+    $("mobileMenuBtn")?.addEventListener("click", () => {
+        document.querySelector(".sidebar")?.classList.toggle("open");
+    });
 }
 
-function closeStudentModal() {
-    if ($("studentModal")) {
-        $("studentModal").classList.add("hidden");
-    }
+function openSection(section) {
+    const nav = document.querySelector(
+        `.nav-item[data-section="${section}"]`
+    );
 
-    if ($("studentForm")) {
-        $("studentForm").reset();
-    }
-}
-
-async function addStudent(event) {
-    event.preventDefault();
-
-    const roll = $("studentRoll")
-        ? $("studentRoll").value.trim()
-        : "";
-
-    const name = $("studentName")
-        ? $("studentName").value.trim()
-        : "";
-
-    const email = $("studentEmail")
-        ? $("studentEmail").value.trim()
-        : "";
-
-    const phone = $("studentPhone")
-        ? $("studentPhone").value.trim()
-        : "";
-
-    const classId = $("studentClass")
-        ? $("studentClass").value
-        : "";
-
-    if (!roll || !name || !classId) {
-        showToast(
-            "Missing Information",
-            "Please fill all required fields.",
-            "error"
-        );
-
+    if (nav) {
+        nav.click();
         return;
     }
 
-    const duplicate = students.find(
-        student =>
-            String(student.roll).toLowerCase() ===
-            String(roll).toLowerCase()
+    document.querySelectorAll(".content-section").forEach(element => {
+        element.classList.remove("active-section");
+    });
+
+    $(section)?.classList.add("active-section");
+    updatePageHeader(section);
+}
+
+function setupGlobalEvents() {
+    document.addEventListener("click", event => {
+        const target = event.target.closest("[data-target]");
+
+        if (target) {
+            openSection(target.dataset.target);
+        }
+
+        const action = event.target.closest("[data-action]");
+        if (!action) return;
+
+        const id = action.dataset.id;
+        const type = action.dataset.action;
+
+        if (type === "edit-student") editStudent(id);
+        if (type === "edit-subject") {
+            const subject = subjects.find(item => String(item.subjectId) === String(id));
+            if (subject) openSubjectModal(subject);
+        }
+        if (type === "delete-subject") deleteSubject(id);
+        if (type === "delete-student") deleteStudent(id);
+        if (type === "mark-present") markStudent(id, "Present");
+        if (type === "mark-absent") markStudent(id, "Absent");
+    });
+}
+/* =========================================================
+   STUDENTS: LOAD FROM DATABASE
+   ========================================================= */
+
+async function loadStudentsFromDatabase() {
+    try {
+        const data = await apiRequest("/students");
+
+        students = Array.isArray(data)
+            ? data.map(student => {
+                const classId = getClassId(student);
+
+                return {
+                    id: getStudentId(student),
+                    roll: getRoll(student),
+                    name: getStudentName(student),
+                    email: student.email || "",
+                    phone: student.phone || "",
+                    classId,
+                    className:
+                        student.className ??
+                        student.class_name ??
+                        getClassNameFromId(classId)
+                };
+            })
+            : [];
+
+        console.log("Students loaded:", students);
+    } catch (error) {
+        console.error("Load students:", error);
+        students = [];
+
+        showToast(
+            "Database Error",
+            "Students could not be loaded. Check the backend.",
+            "error"
+        );
+    }
+}
+
+/* =========================================================
+   STUDENTS: UI AND CRUD
+   ========================================================= */
+
+function setupStudents() {
+    $("addStudentBtn")?.addEventListener("click", openStudentModal);
+    $("closeStudentModal")?.addEventListener("click", closeStudentModal);
+    $("cancelStudentBtn")?.addEventListener("click", closeStudentModal);
+    $("studentForm")?.addEventListener("submit", saveStudent);
+    $("studentSearch")?.addEventListener("input", renderStudents);
+    $("classFilter")?.addEventListener("change", renderStudents);
+}
+
+function openStudentModal() {
+    $("studentModal")?.classList.remove("hidden");
+    $("studentRoll")?.focus();
+}
+
+function closeStudentModal() {
+    $("studentModal")?.classList.add("hidden");
+    $("studentForm")?.reset();
+
+    editingStudentId = null;
+
+    const submit = $("studentForm")?.querySelector('[type="submit"]');
+    if (submit) submit.textContent = "Save Student";
+}
+
+async function saveStudent(event) {
+    event.preventDefault();
+
+    const roll = $("studentRoll")?.value.trim() || "";
+    const name = $("studentName")?.value.trim() || "";
+    const email = $("studentEmail")?.value.trim() || "";
+    const phone = $("studentPhone")?.value.trim() || "";
+    const classId = $("studentClass")?.value || "";
+
+    if (!roll || !name || !classId) {
+        showToast("Missing Information", "Fill all required fields.", "error");
+        return;
+    }
+
+    const duplicate = students.find(student =>
+        String(student.roll).toLowerCase() === roll.toLowerCase() &&
+        String(student.id) !== String(editingStudentId)
     );
 
     if (duplicate) {
@@ -607,11 +842,10 @@ async function addStudent(event) {
             "This roll number already exists.",
             "error"
         );
-
         return;
     }
 
-    const studentData = {
+    const payload = {
         rollNumber: roll,
         studentName: name,
         email: email || null,
@@ -619,54 +853,44 @@ async function addStudent(event) {
         classId: Number(classId)
     };
 
-    try {
-        const response = await fetch(
-            `${API_BASE_URL}/students`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(studentData)
-            }
-        );
+    const wasEditing = editingStudentId !== null;
 
-        if (!response.ok) {
-            throw new Error(
-                `Server returned ${response.status}`
+    try {
+        if (wasEditing) {
+            await apiRequest(
+                `/students/${encodeURIComponent(editingStudentId)}`,
+                {
+                    method: "PUT",
+                    body: JSON.stringify(payload)
+                }
             );
+        } else {
+            await apiRequest("/students", {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
         }
 
-        const saved = await response.json();
-
-        students.push({
-            id: saved.studentId,
-            roll: saved.rollNumber || roll,
-            name: saved.studentName || name,
-            email: saved.email || email,
-            phone: saved.phone || phone,
-            classId: saved.classId || Number(classId),
-            className:
-                getClassNameFromId(
-                    saved.classId || Number(classId)
-                )
-        });
+        await loadStudentsFromDatabase();
 
         renderStudents();
+        loadAttendanceStudentsIfVisible();
         renderDashboard();
         closeStudentModal();
 
         showToast(
-            "Student Added",
-            "Student has been added successfully.",
+            wasEditing ? "Student Updated" : "Student Added",
+            wasEditing
+                ? "Student record updated."
+                : "Student saved successfully.",
             "success"
         );
     } catch (error) {
-        console.error("Add student error:", error);
+        console.error("Save student:", error);
 
         showToast(
-            "Database Error",
-            error.message || "Unable to add student.",
+            "Save Failed",
+            `${error.message}. Check the student API endpoint.`,
             "error"
         );
     }
@@ -674,758 +898,772 @@ async function addStudent(event) {
 
 function renderStudents() {
     const table = $("studentsTable");
-
     if (!table) return;
 
-    const search = $("studentSearch")
-        ? $("studentSearch").value
-            .trim()
-            .toLowerCase()
-        : "";
-
-    const selectedClass = $("classFilter")
-        ? $("classFilter").value
-        : "all";
+    const search = $("studentSearch")?.value.trim().toLowerCase() || "";
+    const selectedClass = $("classFilter")?.value || "all";
 
     let list = [...students];
 
     if (search) {
         list = list.filter(student =>
-            String(student.roll)
-                .toLowerCase()
-                .includes(search) ||
-            String(student.name)
-                .toLowerCase()
-                .includes(search) ||
-            String(student.email)
-                .toLowerCase()
-                .includes(search)
+            String(student.roll).toLowerCase().includes(search) ||
+            String(student.name).toLowerCase().includes(search) ||
+            String(student.email).toLowerCase().includes(search) ||
+            String(student.phone).toLowerCase().includes(search)
         );
     }
 
-    if (
-        selectedClass &&
-        selectedClass !== "all"
-    ) {
+    if (selectedClass !== "all" && selectedClass !== "") {
         list = list.filter(
-            student =>
-                String(student.classId) ===
-                String(selectedClass)
+            student => String(student.classId) === String(selectedClass)
         );
     }
 
     if (!list.length) {
         table.innerHTML = `
             <tr>
-                <td colspan="7" class="empty-state">
-                    No students found.
-                </td>
+                <td colspan="6" class="empty-state">No students found.</td>
             </tr>
         `;
-
         return;
     }
 
-    table.innerHTML = list
-        .map((student, index) => `
-            <tr>
-                <td>${index + 1}</td>
-                <td>
-                    <strong>
-                        ${escapeHTML(student.roll)}
-                    </strong>
-                </td>
-                <td>
-                    ${escapeHTML(student.name)}
-                </td>
-                <td>
-                    ${escapeHTML(student.email || "-")}
-                </td>
-                <td>
-                    ${escapeHTML(student.phone || "-")}
-                </td>
-                <td>
-                    ${escapeHTML(
-                        student.className ||
-                        getClassNameFromId(
-                            student.classId
-                        ) ||
-                        "-"
-                    )}
-                </td>
-                <td>
-                    <div class="table-actions">
-                        <button
-                            class="btn btn-sm btn-secondary"
-                            data-action="edit-student"
-                            data-id="${student.id}">
-                            Edit
-                        </button>
+    table.innerHTML = list.map(student => `
+        <tr>
+            <td>${escapeHTML(student.roll || "-")}</td>
+            <td><strong>${escapeHTML(student.name || "-")}</strong></td>
+            <td>${escapeHTML(student.email || "-")}</td>
+            <td>${escapeHTML(
+                student.className ||
+                getClassNameFromId(student.classId) ||
+                "-"
+            )}</td>
+            <td>${escapeHTML(student.phone || "-")}</td>
+            <td>
+                <div class="table-actions">
+                    <button class="btn btn-sm btn-secondary"
+                        data-action="edit-student"
+                        data-id="${escapeHTML(student.id)}">Edit</button>
 
-                        <button
-                            class="btn btn-sm btn-danger"
-                            data-action="delete-student"
-                            data-id="${student.id}">
-                            Delete
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `)
-        .join("");
+                    <button class="btn btn-sm btn-danger"
+                        data-action="delete-student"
+                        data-id="${escapeHTML(student.id)}">Delete</button>
+                </div>
+            </td>
+        </tr>
+    `).join("");
 }
 
 function editStudent(id) {
     const student = students.find(
-        item => Number(item.id) === Number(id)
+        item => String(item.id) === String(id)
     );
 
-    if (!student) return;
-
-    if ($("studentRoll")) {
-        $("studentRoll").value = student.roll;
+    if (!student) {
+        showToast("Not Found", "Student record was not found.", "error");
+        return;
     }
 
-    if ($("studentName")) {
-        $("studentName").value = student.name;
-    }
+    editingStudentId = student.id;
 
-    if ($("studentEmail")) {
-        $("studentEmail").value = student.email;
-    }
+    if ($("studentRoll")) $("studentRoll").value = student.roll;
+    if ($("studentName")) $("studentName").value = student.name;
+    if ($("studentEmail")) $("studentEmail").value = student.email;
+    if ($("studentPhone")) $("studentPhone").value = student.phone;
+    if ($("studentClass")) $("studentClass").value = String(student.classId);
 
-    if ($("studentPhone")) {
-        $("studentPhone").value = student.phone;
-    }
-
-    if ($("studentClass")) {
-        $("studentClass").value =
-            String(student.classId);
-    }
+    const submit = $("studentForm")?.querySelector('[type="submit"]');
+    if (submit) submit.textContent = "Update Student";
 
     openStudentModal();
-
-    showToast(
-        "Edit Mode",
-        "You can edit the student information.",
-        "info"
-    );
 }
 
-function deleteStudent(id) {
+async function deleteStudent(id) {
     const student = students.find(
-        item => Number(item.id) === Number(id)
+        item => String(item.id) === String(id)
     );
 
     if (!student) return;
 
-    const confirmed = confirm(
-        `Delete ${student.name}?`
-    );
+    if (!confirm(`Permanently delete ${student.name} from the database?`)) {
+        return;
+    }
 
-    if (!confirmed) return;
+    try {
+        await apiRequest(`/students/${encodeURIComponent(id)}`, {
+            method: "DELETE"
+        });
 
-    students = students.filter(
-        item => Number(item.id) !== Number(id)
-    );
+        await loadStudentsFromDatabase();
+        await loadAttendanceFromDatabase();
 
-    renderStudents();
-    renderDashboard();
+        renderStudents();
+        renderDashboard();
+        renderRecords();
+        renderReports();
 
-    showToast(
-        "Student Removed",
-        "Student was removed from the current list.",
-        "success"
-    );
+        showToast("Deleted", "Student deleted from the database.", "success");
+    } catch (error) {
+        console.error("Delete student:", error);
+
+        showToast(
+            "Delete Failed",
+            `${error.message}. Check the backend delete route.`,
+            "error"
+        );
+    }
 }
+
+/* =========================================================
+   ATTENDANCE: LOAD RECORDS
+   ========================================================= */
+
+async function loadAttendanceFromDatabase() {
+    try {
+        const data = await apiRequest("/attendance");
+
+        attendanceRecords = Array.isArray(data)
+            ? data.map(record => ({
+                id: record.attendanceId ??
+                    record.attendance_id ?? record.id,
+                studentId: record.studentId ?? record.student_id,
+                subjectId: record.subjectId ??
+                    record.subject_id ?? null,
+                date: record.attendanceDate ??
+                    record.attendance_date ?? record.date,
+                status: normalizeStatus(record.status),
+                studentName: record.studentName ??
+                    record.student_name ?? "",
+                roll: record.rollNumber ??
+                    record.roll_number ?? "",
+                classId: record.classId ?? record.class_id,
+                subjectName: record.subjectName ?? record.subject_name ?? ""
+            }))
+            : [];
+
+        attendanceRecords = attendanceRecords.map(record => ({
+            ...record,
+            subjectName: record.subjectName || getSubjectNameFromId(record.subjectId)
+        }));
+        console.log("Attendance records:", attendanceRecords);
+    } catch (error) {
+        console.error("Attendance loading:", error);
+        attendanceRecords = [];
+
+        showToast(
+            "Attendance Error",
+            "Attendance records could not be loaded from the backend.",
+            "error"
+        );
+    }
+}
+
+function normalizeStatus(status) {
+    const value = String(status || "").toLowerCase();
+        if (value === "present" || value === "p") return "Present";
+    if (value === "absent" || value === "a") return "Absent";
+    if (value === "late") return "Late";
+
+    return "Not Marked";
+}
+
+/* =========================================================
+   ATTENDANCE: MARK AND SAVE
+   ========================================================= */
+
 function setupAttendance() {
-    if ($("loadStudentsBtn")) {
-        $("loadStudentsBtn").addEventListener(
-            "click",
-            loadAttendanceStudents
-        );
-    }
+    $("loadStudentsBtn")?.addEventListener("click", loadAttendanceStudents);
+    $("markAllPresent")?.addEventListener("click", () => markAll("Present"));
+    $("markAllAbsent")?.addEventListener("click", () => markAll("Absent"));
+    $("saveAttendanceBtn")?.addEventListener("click", saveAttendance);
 
-    if ($("markAllPresent")) {
-        $("markAllPresent").addEventListener(
-            "click",
-            () => markAll("Present")
-        );
-    }
+    $("attendanceClass")?.addEventListener("change", () => {
+        populateAttendanceSubjectDropdown();
+        const table = $("attendanceTable");
+        if (table) table.innerHTML = "";
+        currentAttendance = {};
+    });
 
-    if ($("markAllAbsent")) {
-        $("markAllAbsent").addEventListener(
-            "click",
-            () => markAll("Absent")
-        );
-    }
-
-    if ($("saveAttendanceBtn")) {
-        $("saveAttendanceBtn").addEventListener(
-            "click",
-            saveAttendance
-        );
-    }
+    ["attendanceDate", "attendanceSubject"].forEach(id => {
+        $(id)?.addEventListener("change", () => {
+            const table = $("attendanceTable");
+            if (table) table.innerHTML = "";
+            currentAttendance = {};
+        });
+    });
 }
 
 function loadAttendanceStudents() {
-    const selectedClass =
-        $("attendanceClass")
-            ? $("attendanceClass").value
-            : "";
+    const classId = $("attendanceClass")?.value || "";
+    const date = $("attendanceDate")?.value || getTodayDate();
+    const selectedSubject = $("attendanceSubject")?.value || "";
+    const subjectId = selectedSubject ? String(selectedSubject) : "";
 
+    if (!classId) {
+        showToast("Select Class", "Choose a class first.", "error");
+        return;
+    }
+
+    if (!selectedSubject) {
+        showToast("Select Subject", "Choose a subject first.", "error");
+        return;
+    }
+
+    const list = students.filter(
+        student => String(student.classId) === String(classId)
+    );
+
+    currentAttendance = {};
+
+    list.forEach(student => {
+        const existing = attendanceRecords.find(record =>
+            String(record.studentId) === String(student.id) &&
+            String(record.date).slice(0, 10) === date &&
+            String(record.subjectId ?? "") === subjectId
+        );
+
+        currentAttendance[student.id] =
+            existing?.status === "Present" || existing?.status === "Absent"
+                ? existing.status
+                : "";
+    });
+
+    renderAttendanceStudents(list);
+
+    if (!list.length) {
+        showToast("No Students", "No students found for this class.", "info");
+    }
+}
+
+function loadAttendanceStudentsIfVisible() {
+    const section = $("attendanceSection");
+    if (section?.classList.contains("active-section")) {
+        loadAttendanceStudents();
+    }
+}
+
+
+function renderAttendanceStudents(list) {
     const table = $("attendanceTable");
-
     if (!table) return;
 
-    if (!selectedClass || selectedClass === "all") {
+    if (!list.length) {
         table.innerHTML = `
             <tr>
-                <td colspan="4">
-                    Please select a class first.
+                <td colspan="5" class="attendance-empty">
+                    No students found for this class.
                 </td>
             </tr>
         `;
+        return;
+    }
 
-        showToast(
-            "Select Class",
-            "Please select a class to load students.",
-            "error"
-        );
+    table.innerHTML = list.map((student, index) => {
+        const status = currentAttendance[student.id] || "";
 
+        const statusClass =
+            status === "Present" ? "status-present" :
+            status === "Absent" ? "status-absent" :
+            "status-unmarked";
+
+        return `
+            <tr>
+                <td>${index + 1}</td>
+
+                <td>${escapeHTML(student.roll || "-")}</td>
+
+                <td class="student-name">
+                    ${escapeHTML(student.name || "-")}
+                </td>
+
+                <td>
+                    ${escapeHTML(
+                        student.className ||
+                        getClassNameFromId(student.classId) ||
+                        "-"
+                    )}
+                </td>
+
+                <td>
+                    <select
+                        class="attendance-status ${statusClass}"
+                        data-student-id="${escapeHTML(student.id)}"
+                        aria-label="Attendance status for ${escapeHTML(student.name)}"
+                    >
+                        <option value="" ${!status ? "selected" : ""}>
+                            Select Status
+                        </option>
+
+                        <option value="Present" ${
+                            status === "Present" ? "selected" : ""
+                        }>
+                            Present
+                        </option>
+
+                        <option value="Absent" ${
+                            status === "Absent" ? "selected" : ""
+                        }>
+                            Absent
+                        </option>
+                    </select>
+                </td>
+            </tr>
+        `;
+    }).join("");
+
+    table.querySelectorAll(".attendance-status").forEach(select => {
+        select.addEventListener("change", () => {
+            const studentId = select.dataset.studentId;
+
+            currentAttendance[studentId] = select.value;
+
+            select.classList.remove(
+                "status-present",
+                "status-absent",
+                "status-unmarked"
+            );
+
+            if (select.value === "Present") {
+                select.classList.add("status-present");
+            } else if (select.value === "Absent") {
+                select.classList.add("status-absent");
+            } else {
+                select.classList.add("status-unmarked");
+            }
+        });
+    });
+}
+
+
+function markStudent(id, status) {
+    currentAttendance[id] = status;
+
+    const select = document.querySelector(
+        `.attendance-status[data-student-id="${CSS.escape(String(id))}"]`
+    );
+
+    if (select) select.value = status;
+}
+
+function markAll(status) {
+    document.querySelectorAll(".attendance-status").forEach(select => {
+        select.value = status;
+        currentAttendance[select.dataset.studentId] = status;
+    });
+}
+
+async function saveAttendance() {
+    const classId = $("attendanceClass")?.value || "";
+    const date = $("attendanceDate")?.value || getTodayDate();
+
+    if (!classId) {
+        showToast("Select Class", "Choose a class first.", "error");
+        return;
+    }
+
+    const selectedSubject = $("attendanceSubject")?.value || "";
+    if (!selectedSubject) {
+        showToast("Select Subject", "Choose a subject before saving attendance.", "error");
         return;
     }
 
     const classStudents = students.filter(
-        student =>
-            String(student.classId) ===
-            String(selectedClass)
+        student => String(student.classId) === String(classId)
     );
 
     if (!classStudents.length) {
-        table.innerHTML = `
-            <tr>
-                <td colspan="4">
-                    No students found in this class.
-                </td>
-            </tr>
-        `;
-
-        return;
-    }
-
-    currentAttendance = {};
-
-    classStudents.forEach(student => {
-        currentAttendance[student.id] =
-            "Present";
-    });
-
-    renderAttendanceTable(classStudents);
-
-    showToast(
-        "Students Loaded",
-        `${classStudents.length} students loaded.`,
-        "success"
-    );
-}
-
-function renderAttendanceTable(list) {
-    const table = $("attendanceTable");
-
-    if (!table) return;
-
-    table.innerHTML = list
-        .map((student, index) => {
-            const status =
-                currentAttendance[student.id] ||
-                "Present";
-
-            return `
-                <tr>
-                    <td>${index + 1}</td>
-
-                    <td>
-                        <strong>
-                            ${escapeHTML(student.roll)}
-                        </strong>
-                    </td>
-
-                    <td>
-                        ${escapeHTML(student.name)}
-                    </td>
-
-                    <td>
-                        <div class="attendance-status">
-
-                            <button
-                                class="present-btn ${
-                                    status === "Present"
-                                        ? "active"
-                                        : ""
-                                }"
-                                data-action="attendance"
-                                data-id="${student.id}"
-                                data-status="Present">
-                                Present
-                            </button>
-
-                            <button
-                                class="absent-btn ${
-                                    status === "Absent"
-                                        ? "active"
-                                        : ""
-                                }"
-                                data-action="attendance"
-                                data-id="${student.id}"
-                                data-status="Absent">
-                                Absent
-                            </button>
-
-                        </div>
-                    </td>
-                </tr>
-            `;
-        })
-        .join("");
-}
-
-function setAttendance(studentId, status) {
-    currentAttendance[studentId] = status;
-
-    const selectedClass =
-        $("attendanceClass")
-            ? $("attendanceClass").value
-            : "";
-
-    const list = students.filter(
-        student =>
-            String(student.classId) ===
-            String(selectedClass)
-    );
-
-    renderAttendanceTable(list);
-}
-
-function markAll(status) {
-    const selectedClass =
-        $("attendanceClass")
-            ? $("attendanceClass").value
-            : "";
-
-    if (!selectedClass || selectedClass === "all") {
-        showToast(
-            "Select Class",
-            "Please load a class first.",
-            "error"
-        );
-
-        return;
-    }
-
-    const list = students.filter(
-        student =>
-            String(student.classId) ===
-            String(selectedClass)
-    );
-
-    if (!list.length) {
         showToast(
             "No Students",
-            "No students found in this class.",
+            "Load a class with students first.",
             "error"
         );
-
         return;
     }
 
-    list.forEach(student => {
-        currentAttendance[student.id] =
-            status;
-    });
-
-    renderAttendanceTable(list);
-
-    showToast(
-        "Attendance Updated",
-        `All students marked ${status}.`,
-        "success"
-    );
-}
-
-function saveAttendance() {
-    const date =
-        $("attendanceDate")
-            ? $("attendanceDate").value
-            : "";
-
-    const classId =
-        $("attendanceClass")
-            ? $("attendanceClass").value
-            : "";
-
-    const subject =
-        $("attendanceSubject")
-            ? $("attendanceSubject").value
-            : "";
-
-    if (!date) {
-        showToast(
-            "Select Date",
-            "Please select attendance date.",
-            "error"
-        );
-
-        return;
-    }
-
-    if (!classId || classId === "all") {
-        showToast(
-            "Select Class",
-            "Please select a class.",
-            "error"
-        );
-
-        return;
-    }
-
-    if (!subject || subject === "all") {
-        showToast(
-            "Select Subject",
-            "Please select a subject.",
-            "error"
-        );
-
-        return;
-    }
-
-    const list = students.filter(
-        student =>
-            String(student.classId) ===
-            String(classId)
+    const unmarked = classStudents.filter(
+        student => !currentAttendance[student.id]
     );
 
-    if (!list.length) {
+    if (unmarked.length) {
         showToast(
-            "No Students",
-            "No students found.",
+            "Incomplete Attendance",
+            `${unmarked.length} student(s) have not been marked.`,
             "error"
         );
-
         return;
     }
 
-    list.forEach(student => {
-        const status =
-            currentAttendance[student.id] ||
-            "Present";
+    const button = $("saveAttendanceBtn");
+    if (button) button.disabled = true;
 
-        const existing =
-            attendanceRecords.find(
-                record =>
-                    Number(record.studentId) ===
-                        Number(student.id) &&
-                    record.date === date &&
-                    record.subject === subject
+    try {
+        for (const student of classStudents) {
+            const subjectId = Number(selectedSubject);
+
+            const existing = attendanceRecords.find(record =>
+                String(record.studentId) === String(student.id) &&
+                String(record.date).slice(0, 10) === date &&
+                String(record.subjectId ?? "") === String(subjectId ?? "")
             );
 
-        const record = {
-            studentId: student.id,
-            studentName: student.name,
-            roll: student.roll,
-            classId: student.classId,
-            className:
-                student.className ||
-                getClassNameFromId(
-                    student.classId
-                ),
-            subject,
-            date,
-            status
-        };
+            const payload = {
+                studentId: Number(student.id),
+                subjectId,
+                attendanceDate: date,
+                status: currentAttendance[student.id]
+            };
 
-        if (existing) {
-            Object.assign(existing, record);
-        } else {
-            attendanceRecords.push(record);
+            if (existing?.id) {
+                await apiRequest(
+                    `/attendance/${encodeURIComponent(existing.id)}`,
+                    {
+                        method: "PUT",
+                        body: JSON.stringify(payload)
+                    }
+                );
+            } else {
+                await apiRequest("/attendance", {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
+            }
         }
-    });
 
-    showToast(
-        "Attendance Saved",
-        "Attendance has been saved successfully.",
-        "success"
-    );
+        await loadAttendanceFromDatabase();
 
-    renderDashboard();
-    renderRecords();
-    renderReports();
+        renderDashboard();
+        renderRecords();
+        renderReports();
+
+        showToast(
+            "Saved",
+            "Attendance saved successfully.",
+            "success"
+        );
+    } catch (error) {
+        console.error("Save attendance:", error);
+
+        showToast(
+            "Attendance Save Failed",
+            `${error.message}. Check your Spring Boot attendance API.`,
+            "error"
+        );
+    } finally {
+        if (button) button.disabled = false;
+    }
 }
 
+/* =========================================================
+   ATTENDANCE RECORDS
+   ========================================================= */
+
 function setupRecords() {
-    if ($("filterRecordsBtn")) {
-        $("filterRecordsBtn").addEventListener(
-            "click",
-            renderRecords
-        );
+    [
+        "recordSearch",
+        "recordClass",
+        "recordSubject",
+        "recordStartDate",
+        "recordEndDate",
+        "recordFromDate",
+        "recordToDate",
+        "recordStatus"
+    ].forEach(id => {
+        $(id)?.addEventListener("input", renderRecords);
+        $(id)?.addEventListener("change", renderRecords);
+    });
+
+    $("recordClass")?.addEventListener("change", () => {
+        populateRecordSubjectDropdown();
+        renderRecords();
+    });
+}
+
+function populateRecordSubjectDropdown() {
+    const select = $("recordSubject");
+    if (!select) return;
+
+    const previous = select.value || "all";
+    const classId = $("recordClass")?.value || "all";
+    const relevantSubjects = classId === "all"
+        ? subjects
+        : subjects.filter(subject => String(subject.classId) === String(classId));
+
+    select.innerHTML = "";
+    const allOption = document.createElement("option");
+    allOption.value = "all";
+    allOption.textContent = "All Subjects";
+    select.appendChild(allOption);
+
+    relevantSubjects.forEach(subject => {
+        const option = document.createElement("option");
+        option.value = String(subject.subjectId);
+        option.textContent = subject.subjectName;
+        select.appendChild(option);
+    });
+
+    if ([...select.options].some(option => option.value === previous)) {
+        select.value = previous;
+    } else {
+        select.value = "all";
     }
 }
 
 function renderRecords() {
-    const table = $("recordsTable");
-
+    const table = $("recordsTable") || $("attendanceRecordsTable");
     if (!table) return;
 
-    const from =
-        $("recordFromDate")
-            ? $("recordFromDate").value
-            : "";
+    const search = $("recordSearch")?.value.trim().toLowerCase() || "";
+    const classId = $("recordClass")?.value || "all";
+    const startDate =
+        $("recordFromDate")?.value ||
+        $("recordStartDate")?.value || "";
+    const endDate =
+        $("recordToDate")?.value ||
+        $("recordEndDate")?.value || "";
+    const status = $("recordStatus")?.value || "all";
+    const subjectId = $("recordSubject")?.value || "all";
 
-    const to =
-        $("recordToDate")
-            ? $("recordToDate").value
-            : "";
+    let list = attendanceRecords.map(record => {
+        const student = students.find(
+            item => String(item.id) === String(record.studentId)
+        );
 
-    const selectedClass =
-        $("recordClass")
-            ? $("recordClass").value
-            : "all";
+        return {
+            ...record,
+            studentName: record.studentName || student?.name || "-",
+            roll: record.roll || student?.roll || "-",
+            classId: record.classId ?? student?.classId,
+            subject: record.subjectName ||
+                getSubjectNameFromId(record.subjectId) ||
+                (record.subjectId != null ? `Subject ID ${record.subjectId}` : "-")
+        };
+    });
 
-    let records = [...attendanceRecords];
-
-    if (from) {
-        records = records.filter(
-            record => record.date >= from
+    if (search) {
+        list = list.filter(record =>
+            String(record.studentName).toLowerCase().includes(search) ||
+            String(record.roll).toLowerCase().includes(search) ||
+            String(record.subject).toLowerCase().includes(search)
         );
     }
 
-    if (to) {
-        records = records.filter(
-            record => record.date <= to
+    if (classId !== "all" && classId !== "") {
+        list = list.filter(
+            record => String(record.classId) === String(classId)
         );
     }
 
-    if (
-        selectedClass &&
-        selectedClass !== "all"
-    ) {
-        records = records.filter(
-            record =>
-                String(record.classId) ===
-                String(selectedClass)
+    if (subjectId !== "all" && subjectId !== "") {
+        list = list.filter(
+            record => String(record.subjectId) === String(subjectId)
         );
     }
 
-    if (!records.length) {
+    if (startDate) {
+        list = list.filter(
+            record => String(record.date).slice(0, 10) >= startDate
+        );
+    }
+
+    if (endDate) {
+        list = list.filter(
+            record => String(record.date).slice(0, 10) <= endDate
+        );
+    }
+
+    if (status !== "all" && status !== "") {
+        list = list.filter(
+            record => record.status.toLowerCase() === status.toLowerCase()
+        );
+    }
+
+    const summary = $("recordsSummary");
+    if (summary) {
+        const presentCount = list.filter(record => record.status === "Present").length;
+        const absentCount = list.filter(record => record.status === "Absent").length;
+        const otherCount = list.length - presentCount - absentCount;
+        summary.innerHTML = `
+            <div class="report-card"><span>Filtered Records</span><strong>${list.length}</strong></div>
+            <div class="report-card"><span>Present</span><strong>${presentCount}</strong></div>
+            <div class="report-card"><span>Absent</span><strong>${absentCount}</strong></div>
+        `;
+        if (otherCount > 0) {
+            summary.insertAdjacentHTML("beforeend", `<div class="report-card"><span>Other / Unmarked</span><strong>${otherCount}</strong></div>`);
+        }
+    }
+
+    if (!list.length) {
         table.innerHTML = `
             <tr>
-                <td colspan="7">
-                    No attendance records found.
-                </td>
+                <td colspan="6" class="empty-state">No records found.</td>
             </tr>
         `;
-
         return;
     }
 
-    table.innerHTML = records
-        .map((record, index) => `
-            <tr>
-                <td>${index + 1}</td>
+    list.sort((a, b) =>
+        String(b.date).localeCompare(String(a.date))
+    );
 
-                <td>
-                    ${escapeHTML(record.roll)}
-                </td>
-
-                <td>
-                    ${escapeHTML(record.studentName)}
-                </td>
-
-                <td>
-                    ${escapeHTML(
-                        record.className || "-"
-                    )}
-                </td>
-
-                <td>
-                    ${escapeHTML(
-                        record.subject || "-"
-                    )}
-                </td>
-
-                <td>
-                    ${formatDate(record.date)}
-                </td>
-
-                <td>
-                    <span class="status-badge ${
-                        record.status === "Present"
-                            ? "present"
-                            : "absent"
-                    }">
-                        ${escapeHTML(record.status)}
-                    </span>
-                </td>
-            </tr>
-        `)
-        .join("");
+    table.innerHTML = list.map(record => `
+        <tr>
+            <td>${escapeHTML(formatDate(record.date))}</td>
+            <td>${escapeHTML(record.roll)}</td>
+            <td>${escapeHTML(record.studentName)}</td>
+            <td>${escapeHTML(
+                getClassNameFromId(record.classId) || "-"
+            )}</td>
+            <td>${escapeHTML(record.subject)}</td>
+            <td>
+                <span class="status-badge status-${escapeHTML(
+                    record.status.toLowerCase().replace(/\s+/g, "-")
+                )}">
+                    ${escapeHTML(record.status)}
+                </span>
+            </td>
+        </tr>
+    `).join("");
 }
 
-function setupReports() {
-    if ($("printReportBtn")) {
-        $("printReportBtn").addEventListener(
-            "click",
-            () => window.print()
-        );
-    }
-}
-
-function renderReports() {
-    const table = $("reportsTable");
-
-    if (!table) return;
-
-    if (!attendanceRecords.length) {
-        if ($("overallAttendance")) {
-            $("overallAttendance").textContent =
-                "0%";
-        }
-
-        if ($("highestAttendance")) {
-            $("highestAttendance").textContent =
-                "-";
-        }
-
-        if ($("lowestAttendance")) {
-            $("lowestAttendance").textContent =
-                "-";
-        }
-
-        table.innerHTML = `
-            <tr>
-                <td colspan="7">
-                    No attendance data available.
-                </td>
-            </tr>
-        `;
-
-        return;
-    }
-
-    const statsMap = {};
-
-    attendanceRecords.forEach(record => {
-        if (!statsMap[record.studentId]) {
-            statsMap[record.studentId] = {
-                name: record.studentName,
-                roll: record.roll,
-                className: record.className,
-                present: 0,
-                absent: 0
-            };
-        }
-
-        if (record.status === "Present") {
-            statsMap[record.studentId].present++;
-        } else {
-            statsMap[record.studentId].absent++;
-        }
-    });
-
-    const stats = Object.values(statsMap);
-
-    stats.forEach(item => {
-        const total =
-            item.present + item.absent;
-
-        item.rate = total
-            ? (
-                item.present /
-                total *
-                100
-            ).toFixed(1)
-            : "0.0";
-    });
-
-    const totalPresent =
-        attendanceRecords.filter(
-            record =>
-                record.status === "Present"
-        ).length;
-
-    const overall =
-        attendanceRecords.length
-            ? (
-                totalPresent /
-                attendanceRecords.length *
-                100
-            ).toFixed(1)
-            : "0.0";
-
-    if ($("overallAttendance")) {
-        $("overallAttendance").textContent =
-            `${overall}%`;
-    }
-
-    const highest = [...stats].sort(
-        (a, b) =>
-            Number(b.rate) -
-            Number(a.rate)
-    )[0];
-
-    const lowest = [...stats].sort(
-        (a, b) =>
-            Number(a.rate) -
-            Number(b.rate)
-    )[0];
-
-    if ($("highestAttendance")) {
-        $("highestAttendance").textContent =
-            highest
-                ? `${highest.name} (${highest.rate}%)`
-                : "-";
-    }
-
-    if ($("lowestAttendance")) {
-        $("lowestAttendance").textContent =
-            lowest
-                ? `${lowest.name} (${lowest.rate}%)`
-                : "-";
-    }
-
-    table.innerHTML = stats
-        .map((item, index) => `
-            <tr>
-                <td>${index + 1}</td>
-
-                <td>
-                    ${escapeHTML(item.roll)}
-                </td>
-
-                <td>
-                    ${escapeHTML(item.name)}
-                </td>
-
-                <td>
-                    ${escapeHTML(
-                        item.className || "-"
-                    )}
-                </td>
-
-                <td>${item.present}</td>
-                <td>${item.absent}</td>
-                <td>${item.rate}%</td>
-            </tr>
-        `)
-        .join("");
-}
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
 
 function renderDashboard() {
     const today = getTodayDate();
 
-    const records = attendanceRecords.filter(
-        record => record.date === today
+    const todaysRecords = attendanceRecords.filter(
+        record => String(record.date).slice(0, 10) === today
     );
+
+    // Count one daily status per student so multiple subject records do not
+    // inflate the dashboard cards. The most recent record for that student wins.
+    const latestByStudent = new Map();
+    [...todaysRecords]
+        .sort((a, b) => String(a.id ?? "").localeCompare(String(b.id ?? "")))
+        .forEach(record => {
+            if (record.status === "Present" || record.status === "Absent") {
+                latestByStudent.set(String(record.studentId), record);
+            }
+        });
+
+    const dailyStatuses = [...latestByStudent.values()];
+    const present = dailyStatuses.filter(record => record.status === "Present").length;
+    const absent = dailyStatuses.filter(record => record.status === "Absent").length;
+    const total = students.length;
+    const markedStudents = new Set(latestByStudent.keys());
+    const notMarked = Math.max(0, total - markedStudents.size);
+    const rate = markedStudents.size
+        ? Math.round((present / markedStudents.size) * 100)
+        : 0;
+
+    setText("totalStudents", total);
+    setText("presentToday", present);
+    setText("absentToday", absent);
+    setText("attendanceRate", `${rate}%`);
+
+    setText("summaryPresent", present);
+    setText("summaryAbsent", absent);
+    setText("summaryNotMarked", notMarked);
+
+    setWidth("presentProgress", total ? (present / total) * 100 : 0);
+    setWidth("absentProgress", total ? (absent / total) * 100 : 0);
+    setWidth("notMarkedProgress", total ? (notMarked / total) * 100 : 0);
+
+    const recentTable = $("recentAttendanceTable");
+
+    if (recentTable) {
+        const recent = [...attendanceRecords]
+            .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+            .slice(0, 5);
+
+        recentTable.innerHTML = recent.length
+            ? recent.map(record => {
+                const student = students.find(
+                    item => String(item.id) === String(record.studentId)
+                );
+
+                return `
+                    <tr>
+                        <td>${escapeHTML(
+                            record.studentName || student?.name || "-"
+                        )}</td>
+                        <td>${escapeHTML(
+                            record.roll || student?.roll || "-"
+                        )}</td>
+                        <td>${escapeHTML(
+                            getClassNameFromId(
+                                record.classId ?? student?.classId
+                            ) || "-"
+                        )}</td>
+                        <td>${escapeHTML(formatDate(record.date))}</td>
+                        <td>${escapeHTML(record.status)}</td>
+                    </tr>
+                `;
+            }).join("")
+            : `<tr><td colspan="5">No attendance records found.</td></tr>`;
+    }
+}
+
+function setText(id, value) {
+    if ($(id)) $(id).textContent = String(value);
+}
+
+function setWidth(id, percentage) {
+    if ($(id)) {
+        $(id).style.width =
+            `${Math.min(100, Math.max(0, percentage))}%`;
+    }
+}
+/* =========================================================
+   REPORTS
+   ========================================================= */
+
+function setupReports() {
+    [
+        "reportStartDate",
+        "reportEndDate",
+        "reportClass"
+    ].forEach(id => {
+        $(id)?.addEventListener("change", renderReports);
+    });
+
+    $("exportReportBtn")?.addEventListener("click", exportReportCSV);
+}
+
+function renderReports() {
+    const table = $("reportsTable") || $("reportTable");
+
+    const startDate = $("reportStartDate")?.value || "";
+    const endDate = $("reportEndDate")?.value || "";
+    const classId = $("reportClass")?.value || "all";
+
+    let records = [...attendanceRecords];
+
+    if (startDate) {
+        records = records.filter(
+            record => String(record.date).slice(0, 10) >= startDate
+        );
+    }
+
+    if (endDate) {
+        records = records.filter(
+            record => String(record.date).slice(0, 10) <= endDate
+        );
+    }
+
+    if (classId !== "all" && classId !== "") {
+        records = records.filter(record => {
+            const student = students.find(
+                item => String(item.id) === String(record.studentId)
+            );
+
+            return String(
+                record.classId ?? student?.classId
+            ) === String(classId);
+        });
+    }
 
     const present = records.filter(
         record => record.status === "Present"
@@ -1436,814 +1674,393 @@ function renderDashboard() {
     ).length;
 
     const marked = present + absent;
+    const rate = marked ? Math.round((present / marked) * 100) : 0;
 
-    const notMarked = Math.max(
-        students.length - marked,
-        0
-    );
-
-    const rate = marked
-        ? (
-            present /
-            marked *
-            100
-        ).toFixed(1)
-        : "0.0";
-
-    if ($("totalStudents")) {
-        $("totalStudents").textContent =
-            students.length;
-    }
-
-    if ($("presentToday")) {
-        $("presentToday").textContent =
-            present;
-    }
-
-    if ($("absentToday")) {
-        $("absentToday").textContent =
-            absent;
-    }
-
-    if ($("attendanceRate")) {
-        $("attendanceRate").textContent =
-            `${rate}%`;
-    }
-
-    if ($("summaryPresent")) {
-        $("summaryPresent").textContent =
-            present;
-    }
-
-    if ($("summaryAbsent")) {
-        $("summaryAbsent").textContent =
-            absent;
-    }
-
-    if ($("summaryNotMarked")) {
-        $("summaryNotMarked").textContent =
-            notMarked;
-    }
-
-    const total =
-        Math.max(students.length, 1);
-
-    if ($("presentProgress")) {
-        $("presentProgress").style.width =
-            `${Math.min(
-                present / total * 100,
-                100
-            )}%`;
-    }
-
-    if ($("absentProgress")) {
-        $("absentProgress").style.width =
-            `${Math.min(
-                absent / total * 100,
-                100
-            )}%`;
-    }
-
-    if ($("notMarkedProgress")) {
-        $("notMarkedProgress").style.width =
-            `${Math.min(
-                notMarked / total * 100,
-                100
-            )}%`;
-    }
-
-    renderRecentAttendance();
-}
-
-function renderRecentAttendance() {
-    const table =
-        $("recentAttendanceTable");
+    setText("reportTotalPresent", present);
+    setText("reportTotalAbsent", absent);
+    setText("reportAttendanceRate", `${rate}%`);
+    setText("reportTotalRecords", records.length);
 
     if (!table) return;
 
-    const recent =
-        [...attendanceRecords]
-            .reverse()
-            .slice(0, 8);
+    const perStudent = new Map();
 
-    if (!recent.length) {
-        table.innerHTML = `
-            <tr>
-                <td colspan="6">
-                    No recent attendance records.
-                </td>
-            </tr>
-        `;
+    records.forEach(record => {
+        const student = students.find(
+            item => String(item.id) === String(record.studentId)
+        );
 
-        return;
-    }
+        const key = String(record.studentId);
 
-    table.innerHTML = recent
-        .map((record, index) => `
-            <tr>
-                <td>${index + 1}</td>
+        if (!perStudent.has(key)) {
+            perStudent.set(key, {
+                roll: record.roll || student?.roll || "-",
+                name: record.studentName || student?.name || "-",
+                present: 0,
+                absent: 0
+            });
+        }
 
-                <td>
-                    ${escapeHTML(record.roll)}
-                </td>
+        const item = perStudent.get(key);
 
-                <td>
-                    ${escapeHTML(record.studentName)}
-                </td>
+        if (record.status === "Present") item.present++;
+        if (record.status === "Absent") item.absent++;
+    });
 
-                <td>
-                    ${escapeHTML(
-                        record.className || "-"
-                    )}
-                </td>
+    const rows = [...perStudent.values()];
 
-                <td>
-                    ${formatDate(record.date)}
-                </td>
+    table.innerHTML = rows.length
+        ? rows.map(item => {
+            const total = item.present + item.absent;
+            const percentage = total
+                ? Math.round((item.present / total) * 100)
+                : 0;
 
-                <td>
-                    <span class="status-badge ${
-                        record.status === "Present"
-                            ? "present"
-                            : "absent"
-                    }">
-                        ${escapeHTML(record.status)}
-                    </span>
-                </td>
-            </tr>
-        `)
-        .join("");
+            return `
+                <tr>
+                    <td>${escapeHTML(item.roll)}</td>
+                    <td>${escapeHTML(item.name)}</td>
+                    <td>${item.present}</td>
+                    <td>${item.absent}</td>
+                    <td>${percentage}%</td>
+                </tr>
+            `;
+        }).join("")
+        : `<tr><td colspan="5">No report data found.</td></tr>`;
 }
+
+function exportReportCSV() {
+    const rows = [
+        [
+            "Date",
+            "Roll Number",
+            "Student Name",
+            "Class",
+            "Subject",
+            "Status"
+        ]
+    ];
+
+    attendanceRecords.forEach(record => {
+        const student = students.find(
+            item => String(item.id) === String(record.studentId)
+        );
+
+        rows.push([
+            record.date || "",
+            record.roll || student?.roll || "",
+            record.studentName || student?.name || "",
+            getClassNameFromId(record.classId ?? student?.classId) || "",
+            record.subjectName ||
+                getSubjectNameFromId(record.subjectId) ||
+                (record.subjectId != null
+                    ? `Subject ID ${record.subjectId}`
+                    : ""),
+            record.status || ""
+        ]);
+    });
+
+    const csv = rows.map(row =>
+        row.map(value =>
+            `"${String(value ?? "").replace(/"/g, '""')}"`
+        ).join(",")
+    ).join("\r\n");
+
+    const blob = new Blob(["\uFEFF" + csv], {
+        type: "text/csv;charset=utf-8;"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "attendance-report.csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* =========================================================
+   PROFILE
+   ========================================================= */
 
 function setupProfile() {
-    if ($("saveProfileBtn")) {
-        $("saveProfileBtn").addEventListener(
-            "click",
-            saveProfile
-        );
-    }
+    $("profileForm")?.addEventListener("submit", event => {
+        event.preventDefault();
 
-    loadProfile();
-}
+        const name = $("profileName")?.value.trim() || "";
+        const email = $("profileEmail")?.value.trim() || "";
+        const phone = $("profilePhone")?.value.trim() || "";
 
-function loadProfile() {
-    if ($("profileName")) {
-        $("profileName").value =
-            currentUser.name || "";
-    }
-
-    if ($("profileEmail")) {
-        $("profileEmail").value =
-            currentUser.email ||
-            "admin@attendancedesk.com";
-    }
-
-    if ($("profilePhone")) {
-        $("profilePhone").value =
-            currentUser.phone || "";
-    }
-}
-
-function saveProfile() {
-    if ($("profileName")) {
-        currentUser.name =
-            $("profileName").value.trim();
-    }
-
-    if ($("profileEmail")) {
-        currentUser.email =
-            $("profileEmail").value.trim();
-    }
-
-    if ($("profilePhone")) {
-        currentUser.phone =
-            $("profilePhone").value.trim();
-    }
-
-    if ($("topbarUserName")) {
-        $("topbarUserName").textContent =
-            currentUser.name;
-    }
-
-    localStorage.setItem(
-        "attendanceDeskUser",
-        JSON.stringify(currentUser)
-    );
-
-    showToast(
-        "Profile Updated",
-        "Your profile has been updated successfully.",
-        "success"
-    );
-}
-
-function setupSettings() {
-    const notification = $("notificationSetting");
-    const emailReport = $("emailReportSetting");
-    const compact = $("compactTableSetting");
-
-    if (notification) {
-        notification.addEventListener(
-            "change",
-            () => {
-                localStorage.setItem(
-                    "attendanceNotifications",
-                    notification.checked
-                );
-
-                showToast(
-                    "Setting Updated",
-                    "Notification setting updated.",
-                    "success"
-                );
-            }
-        );
-    }
-
-    if (emailReport) {
-        emailReport.addEventListener(
-            "change",
-            () => {
-                localStorage.setItem(
-                    "attendanceEmailReports",
-                    emailReport.checked
-                );
-
-                showToast(
-                    "Setting Updated",
-                    "Email report setting updated.",
-                    "success"
-                );
-            }
-        );
-    }
-
-    if (compact) {
-        compact.addEventListener(
-            "change",
-            () => {
-                localStorage.setItem(
-                    "attendanceCompactTable",
-                    compact.checked
-                );
-
-                document.body.classList.toggle(
-                    "compact-tables",
-                    compact.checked
-                );
-
-                showToast(
-                    "Setting Updated",
-                    "Table display setting updated.",
-                    "success"
-                );
-            }
-        );
-    }
-}
-
-function loadSettings() {
-    const notification = $("notificationSetting");
-    const emailReport = $("emailReportSetting");
-    const compact = $("compactTableSetting");
-
-    const notificationValue =
-        localStorage.getItem(
-            "attendanceNotifications"
-        );
-
-    const emailValue =
-        localStorage.getItem(
-            "attendanceEmailReports"
-        );
-
-    const compactValue =
-        localStorage.getItem(
-            "attendanceCompactTable"
-        );
-
-    if (
-        notification &&
-        notificationValue !== null
-    ) {
-        notification.checked =
-            notificationValue === "true";
-    }
-
-    if (
-        emailReport &&
-        emailValue !== null
-    ) {
-        emailReport.checked =
-            emailValue === "true";
-    }
-
-    if (
-        compact &&
-        compactValue !== null
-    ) {
-        compact.checked =
-            compactValue === "true";
-
-        document.body.classList.toggle(
-            "compact-tables",
-            compactValue === "true"
-        );
-    }
-}
-
-function setupToast() {
-    if ($("closeToast")) {
-        $("closeToast").addEventListener(
-            "click",
-            hideToast
-        );
-    }
-}
-
-function showToast(
-    title,
-    message,
-    type = "success"
-) {
-    const toast = $("toast");
-
-    if (!toast) return;
-
-    if ($("toastTitle")) {
-        $("toastTitle").textContent = title;
-    }
-
-    if ($("toastMessage")) {
-        $("toastMessage").textContent = message;
-    }
-
-    if ($("toastIcon")) {
-        $("toastIcon").textContent =
-            type === "error"
-                ? "✕"
-                : type === "info"
-                    ? "i"
-                    : "✓";
-    }
-
-    toast.classList.remove(
-        "hidden",
-        "success",
-        "error",
-        "info"
-    );
-
-    toast.classList.add(type);
-
-    clearTimeout(
-        window.attendanceToastTimer
-    );
-
-    window.attendanceToastTimer =
-        setTimeout(hideToast, 3500);
-}
-
-function hideToast() {
-    if ($("toast")) {
-        $("toast").classList.add("hidden");
-    }
-}
-
-function setDefaultDates() {
-    const today = getTodayDate();
-
-    if ($("attendanceDate")) {
-        $("attendanceDate").value = today;
-    }
-
-    if ($("recordFromDate")) {
-        $("recordFromDate").value = today;
-    }
-
-    if ($("recordToDate")) {
-        $("recordToDate").value = today;
-    }
-}
-
-function setupGlobalEvents() {
-    document.addEventListener(
-        "click",
-        event => {
-            const button =
-                event.target.closest(
-                    "[data-action]"
-                );
-
-            if (!button) return;
-
-            const action =
-                button.dataset.action;
-
-            const id =
-                button.dataset.id;
-
-            if (action === "edit-student") {
-                editStudent(id);
-            }
-
-            if (action === "delete-student") {
-                deleteStudent(id);
-            }
-
-            if (action === "attendance") {
-                setAttendance(
-                    id,
-                    button.dataset.status
-                );
-            }
-        }
-    );
-
-    document.addEventListener(
-        "click",
-        event => {
-            const quickAction =
-                event.target.closest(
-                    "[data-section]"
-                );
-
-            if (!quickAction) return;
-
-            const section =
-                quickAction.dataset.section;
-
-            if (!section) return;
-
-            const navItem =
-                document.querySelector(
-                    `.nav-item[data-section="${section}"]`
-                );
-
-            if (navItem) {
-                navItem.click();
-            }
-        }
-    );
-}
-
-function escapeHTML(value) {
-    return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
-/* Attendance Desk - Final Button Fix */
-
-document.addEventListener("DOMContentLoaded", function () {
-
-    const navItems = document.querySelectorAll(".nav-item");
-    const sections = document.querySelectorAll(".content-section");
-
-    function openSection(sectionId) {
-
-        if (!sectionId) return;
-
-        const target = document.getElementById(sectionId);
-
-        if (!target) {
-            console.warn("Section not found:", sectionId);
+        if (!name || !email) {
+            showToast("Missing Information", "Please enter your name and email address.", "error");
             return;
         }
 
-        /* Hide all sections */
-        sections.forEach(section => {
-            section.classList.remove("active");
-            section.classList.remove("active-section");
-        });
+        currentUser = { ...currentUser, name, email, phone };
+        localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+        loadProfile();
 
-        /* Show selected section */
-        target.classList.add("active");
-        target.classList.add("active-section");
+        if ($("topbarUserName")) $("topbarUserName").textContent = currentUser.name;
+        showToast("Profile Updated", "Your administrator profile was saved in this browser.", "success");
+    });
+}
 
-        /* Update sidebar */
-        navItems.forEach(item => {
-            item.classList.remove("active");
+function loadProfile() {
+    if ($("profileName")) $("profileName").value = currentUser.name || "";
+    if ($("profileEmail")) $("profileEmail").value = currentUser.email || "";
+    if ($("profilePhone")) $("profilePhone").value = currentUser.phone || "";
 
-            if (item.dataset.section === sectionId) {
-                item.classList.add("active");
-            }
-        });
+    const name = currentUser.name || "Administrator";
+    const email = currentUser.email || "";
+    const initial = name.trim().charAt(0).toUpperCase() || "A";
 
-        /* Update heading */
-        const pageData = {
+    if ($("profileAvatar")) $("profileAvatar").textContent = initial;
+    if ($("profileDisplayName")) $("profileDisplayName").textContent = name;
+    if ($("profileDisplayEmail")) $("profileDisplayEmail").textContent = email;
+    if ($("profileUsername")) $("profileUsername").textContent = currentUser.username || "admin";
+    if ($("topbarUserName")) $("topbarUserName").textContent = name;
 
-            dashboardSection: {
-                title: "Dashboard",
-                subtitle: "Overview of today's attendance"
-            },
+    updateProfileStats();
+}
 
-            studentsSection: {
-                title: "Students",
-                subtitle: "Manage all registered students"
-            },
+function updateProfileStats() {
+    const values = {
+        profileStudentCount: students.length,
+        profileClassCount: classes.length,
+        profileSubjectCount: subjects.length,
+        profileAttendanceCount: attendanceRecords.length
+    };
+    Object.entries(values).forEach(([id, value]) => {
+        const element = $(id);
+        if (element) element.textContent = String(Number(value) || 0);
+    });
+}
 
-            attendanceSection: {
-                title: "Mark Attendance",
-                subtitle: "Record student attendance"
-            },
+/* =========================================================
+   SETTINGS
+   ========================================================= */
 
-            recordsSection: {
-                title: "Attendance Records",
-                subtitle: "View attendance history"
-            },
+/* =========================================================
+   SETTINGS
+   ========================================================= */
 
-            reportsSection: {
-                title: "Attendance Reports",
-                subtitle: "Analyze student attendance"
-            },
+function setupSettings() {
 
-            profileSection: {
-                title: "Profile",
-                subtitle: "Manage your account information"
-            },
+    // Load saved preferences when Settings is initialised
+    loadSettings();
 
-            settingsSection: {
-                title: "Settings",
-                subtitle: "Configure Attendance Desk"
-            }
+    // Settings form submit
+    $("settingsForm")?.addEventListener("submit", event => {
+        event.preventDefault();
+
+        const saved = saveSettings();
+
+        if (saved) {
+            showToast(
+                "Settings Saved",
+                "Application settings saved successfully.",
+                "success"
+            );
+        }
+    });
+
+    // Save Settings button
+    $("saveSettingsBtn")?.addEventListener("click", event => {
+
+        // Avoid duplicate saving when the button submits the form
+        if (
+            event.currentTarget.form &&
+            event.currentTarget.type !== "button"
+        ) {
+            return;
+        }
+
+        const saved = saveSettings();
+
+        if (saved) {
+            showToast(
+                "Settings Saved",
+                "Your preferences have been saved.",
+                "success"
+            );
+        }
+    });
+
+    // Open Profile button
+    $("openProfileSettingsBtn")?.addEventListener("click", () => {
+
+        // Use the existing profile navigation if available
+        const profileNav = document.querySelector(
+            '[data-section="profileSection"]'
+        );
+
+        if (profileNav) {
+            profileNav.click();
+            return;
+        }
+
+        const profileSection = $("profileSection");
+
+        if (profileSection) {
+            document.querySelectorAll(".content-section")
+                .forEach(section => section.classList.remove("active"));
+
+            profileSection.classList.add("active");
+        } else {
+            showToast(
+                "Profile Unavailable",
+                "Profile section could not be found.",
+                "warning"
+            );
+        }
+    });
+}
+
+
+/* =========================================================
+   LOAD SETTINGS
+   ========================================================= */
+
+function loadSettings() {
+
+    let settings = { ...DEFAULT_SETTINGS };
+
+    try {
+        const saved = localStorage.getItem(SETTINGS_KEY);
+
+        if (saved) {
+            settings = {
+                ...settings,
+                ...JSON.parse(saved)
+            };
+        }
+    } catch (error) {
+        console.warn("Settings load error:", error);
+    }
+
+    // Theme
+    if ($("themeSelect")) {
+        $("themeSelect").value = settings.theme || "light";
+    }
+
+    // Support both old and new notification IDs
+    const notificationInput =
+        $("notificationSetting") || $("notificationsToggle");
+
+    if (notificationInput) {
+        notificationInput.checked =
+            settings.notifications !== false;
+    }
+
+    // Email reports
+    if ($("emailReportSetting")) {
+        $("emailReportSetting").checked =
+            Boolean(settings.emailReports);
+    }
+
+    // Compact tables
+    if ($("compactTableSetting")) {
+        $("compactTableSetting").checked =
+            Boolean(settings.compactTables);
+    }
+
+    // Apply preferences
+    applyAttendanceDeskSettings(settings);
+}
+
+
+/* =========================================================
+   SAVE SETTINGS
+   ========================================================= */
+
+function saveSettings() {
+
+    try {
+        let existingSettings = {};
+
+        try {
+            existingSettings = JSON.parse(
+                localStorage.getItem(SETTINGS_KEY) || "{}"
+            );
+        } catch (error) {
+            console.warn("Existing settings could not be read:", error);
+        }
+
+        const notificationInput =
+            $("notificationSetting") || $("notificationsToggle");
+
+        const settings = {
+            ...DEFAULT_SETTINGS,
+            ...existingSettings,
+
+            theme: $("themeSelect")?.value || "light",
+
+            notifications: notificationInput
+                ? notificationInput.checked
+                : existingSettings.notifications !== false,
+
+            emailReports: $("emailReportSetting")
+                ? $("emailReportSetting").checked
+                : Boolean(existingSettings.emailReports),
+
+            compactTables: $("compactTableSetting")
+                ? $("compactTableSetting").checked
+                : Boolean(existingSettings.compactTables),
+
+            itemsPerPage:
+                existingSettings.itemsPerPage ??
+                DEFAULT_SETTINGS.itemsPerPage
         };
 
-        const data = pageData[sectionId];
+        localStorage.setItem(
+            SETTINGS_KEY,
+            JSON.stringify(settings)
+        );
 
-        if (data) {
+        applyAttendanceDeskSettings(settings);
 
-            const title = document.getElementById("pageTitle");
-            const subtitle = document.getElementById("pageSubtitle");
+        return true;
 
-            if (title) {
-                title.textContent = data.title;
-            }
+    } catch (error) {
+        console.error("Settings save error:", error);
 
-            if (subtitle) {
-                subtitle.textContent = data.subtitle;
-            }
-        }
+        showToast(
+            "Save Failed",
+            "Could not save your settings. Please try again.",
+            "error"
+        );
 
-        /* Refresh section data */
-        if (sectionId === "dashboardSection") {
-            if (typeof renderDashboard === "function") {
-                renderDashboard();
-            }
-        }
-
-        if (sectionId === "studentsSection") {
-            if (typeof renderStudents === "function") {
-                renderStudents();
-            }
-        }
-
-        if (sectionId === "recordsSection") {
-            if (typeof renderRecords === "function") {
-                renderRecords();
-            }
-        }
-
-        if (sectionId === "reportsSection") {
-            if (typeof renderReports === "function") {
-                renderReports();
-            }
-        }
-
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth"
-        });
+        return false;
     }
+}
 
 
-    /* Sidebar navigation */
+/* =========================================================
+   APPLY SETTINGS
+   ========================================================= */
 
-    navItems.forEach(item => {
+function applyAttendanceDeskSettings(settings) {
 
-        item.addEventListener("click", function (event) {
+    const theme = settings.theme || "light";
 
-            event.preventDefault();
+    // Preserve the existing theme attribute
+    document.documentElement.dataset.theme = theme;
 
-            const sectionId = this.dataset.section;
+    // Apply dark mode
+    document.body.classList.toggle(
+        "dark-mode",
+        theme === "dark"
+    );
 
-            openSection(sectionId);
+    // Apply compact table preference
+    document.body.classList.toggle(
+        "compact-tables",
+        Boolean(settings.compactTables)
+    );
+}
 
-        });
-
-    });
-
-
-    /* Quick Action buttons */
-
-    document.querySelectorAll("[data-target]").forEach(button => {
-
-        button.addEventListener("click", function (event) {
-
-            event.preventDefault();
-
-            const sectionId = this.dataset.target;
-
-            openSection(sectionId);
-
-        });
-
-    });
-
-
-    /* Add Student button */
-
-    const addStudentBtn =
-        document.getElementById("addStudentBtn");
-
-    if (addStudentBtn) {
-
-        addStudentBtn.addEventListener("click", function () {
-
-            if (typeof openStudentModal === "function") {
-                openStudentModal();
-            }
-
-        });
-
-    }
-
-
-    /* Load Attendance */
-
-    const loadStudentsBtn =
-        document.getElementById("loadStudentsBtn");
-
-    if (loadStudentsBtn) {
-
-        loadStudentsBtn.addEventListener("click", function () {
-
-            if (typeof loadAttendanceStudents === "function") {
-                loadAttendanceStudents();
-            }
-
-        });
-
-    }
-
-
-    /* Mark All Present */
-
-    const markAllPresent =
-        document.getElementById("markAllPresent");
-
-    if (markAllPresent) {
-
-        markAllPresent.addEventListener("click", function () {
-
-            if (typeof markAll === "function") {
-                markAll("Present");
-            }
-
-        });
-
-    }
-
-
-    /* Mark All Absent */
-
-    const markAllAbsent =
-        document.getElementById("markAllAbsent");
-
-    if (markAllAbsent) {
-
-        markAllAbsent.addEventListener("click", function () {
-
-            if (typeof markAll === "function") {
-                markAll("Absent");
-            }
-
-        });
-
-    }
-
-
-    /* Save Attendance */
-
-    const saveAttendanceBtn =
-        document.getElementById("saveAttendanceBtn");
-
-    if (saveAttendanceBtn) {
-
-        saveAttendanceBtn.addEventListener("click", function () {
-
-            if (typeof saveAttendance === "function") {
-                saveAttendance();
-            }
-
-        });
-
-    }
-
-
-    /* Filter Records */
-
-    const filterRecordsBtn =
-        document.getElementById("filterRecordsBtn");
-
-    if (filterRecordsBtn) {
-
-        filterRecordsBtn.addEventListener("click", function () {
-
-            if (typeof renderRecords === "function") {
-                renderRecords();
-            }
-
-        });
-
-    }
-
-
-    /* Print Report */
-
-    const printReportBtn =
-        document.getElementById("printReportBtn");
-
-    if (printReportBtn) {
-
-        printReportBtn.addEventListener("click", function () {
-
-            window.print();
-
-        });
-
-    }
-
-
-    /* Logout */
-
-    const logoutBtn =
-        document.getElementById("logoutBtn");
-
-    if (logoutBtn) {
-
-        logoutBtn.addEventListener("click", function () {
-
-            localStorage.removeItem("attendanceDeskUser");
-            localStorage.removeItem("attendanceDeskRemember");
-
-            const mainApp =
-                document.getElementById("mainApp");
-
-            const loginPage =
-                document.getElementById("loginPage");
-
-            if (mainApp) {
-                mainApp.classList.add("hidden");
-            }
-
-            if (loginPage) {
-                loginPage.classList.remove("hidden");
-            }
-
-        });
-
-    }
-
-
-    /* Close student modal */
-
-    const closeStudentModal =
-        document.getElementById("closeStudentModal");
-
-    if (closeStudentModal) {
-
-        closeStudentModal.addEventListener("click", function () {
-
-            if (typeof closeStudentModalWindow === "function") {
-                closeStudentModalWindow();
-            }
-
-        });
-
-    }
-
-
-    /* Cancel student modal */
-
-    const cancelStudentBtn =
-        document.getElementById("cancelStudentBtn");
-
-    if (cancelStudentBtn) {
-
-        cancelStudentBtn.addEventListener("click", function () {
-
-            if (typeof closeStudentModalWindow === "function") {
-                closeStudentModalWindow();
-            }
-
-        });
-
-    }
-
-
-    console.log("Attendance Desk buttons initialized successfully.");
-
-});
+/* =========================================================
+   END OF SCRIPT
+   ========================================================= */
